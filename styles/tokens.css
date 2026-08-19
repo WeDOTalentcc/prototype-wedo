@@ -42,6 +42,8 @@
   --wedo-purple-bg: rgba(152, 96, 209, 0.12);
   --wedo-magenta: #D160AB;     /* urgência, prioridade alta */
   --wedo-magenta-bg: rgba(209, 96, 171, 0.12);
+  --wedo-amber: #F59E0B;       /* análises, warning vibrante */
+  --wedo-amber-hover: #D97706;
   --lia-coral: #C74446;        /* identidade LIA — uso MÍNIMO */
   --lia-coral-hover: #B23B3D;
   --lia-coral-bg: #FEF2F2;

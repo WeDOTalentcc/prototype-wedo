@@ -50,8 +50,7 @@ busca ⌘K + sino, Conversar/Conversas, Decidir (Indicadores), Recrutar (Vagas, 
 Talentos + bancos), Agentes BETA (Marketplace + agentes), Projetos, Recentes e rodapé
 (avatar, config, idioma, ajuda, progresso de setup). **Não inventar itens de menu**: a
 estrutura muda só quando o produto mudar. Todo item é navegável: com tela no protótipo
-(via `NAV_MAP`) abre a tela; sem tela, abre `telas/_em-construcao.html`. "Conversar"
-abre o painel da LIA.
+(via `NAV_MAP`) abre a tela; sem tela, abre `telas/_em-construcao.html`.
 
 A **barra flutuante de estados** (proto.js) aparece sozinha ao registrar os estados —
 é ela que permite ao avaliador clicar e ver a tela vazia, cheia, com erro etc.
@@ -101,9 +100,22 @@ prototype-wedo/
 
 ## Tela exemplar (copiar o jeito, não só o template)
 
-`telas/vagas/lista-de-vagas.html` é o **golden example** de tela de tabela: KPIs, busca,
-filtros, tabela, paginação e os 6 estados. Ao criar tela de um padrão novo (kanban,
-chat...), o primeiro exemplar daquele padrão vira a nova referência — caprichar.
+- **Tabela:** `telas/vagas/lista-de-vagas.html` (KPIs, busca, filtros, paginação, 6 estados).
+- **Chat:** `telas/conversar/conversar.html` (empty state com rail de workflow de 9 nós e
+  22 cards fiéis ao `chat-workflow-reels.tsx`, conversa com streaming, card RRP, erro).
+- **Pré-auth:** `telas/acesso/login.html` e `telas/acesso/boas-vindas.html`.
+
+Ao criar tela de um padrão novo (kanban, formulário...), o primeiro exemplar daquele
+padrão vira a nova referência — caprichar.
+
+## Gotchas aprendidos (não repetir)
+
+- `[hidden]` já é neutralizado globalmente no base.css (`display:none !important`) —
+  classe com `display:flex` NÃO pode vencer o atributo (bug que já aconteceu 2x).
+- SVG inline: cor via `stroke` com `var(--token)` funciona, mas confira se o token
+  EXISTE no tokens.css (token inexistente rende preto silenciosamente).
+- Rail/reels: nós têm cor por etapa via `color-mix(in srgb, <accent> 10%, transparent)`
+  (mesma técnica do produto).
 
 ## Checklist antes de entregar qualquer tela (rodar SEMPRE)
 

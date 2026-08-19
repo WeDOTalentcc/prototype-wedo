@@ -58,11 +58,13 @@ Golden example: `telas/vagas/lista-de-vagas.html`.
 
 | id | label |
 |---|---|
-| `padrao` | Conversa com algumas mensagens |
-| `vazio` | Primeiro uso (sugestões de prompt) |
-| `digitando` | LIA processando (indicador) |
-| `com-card` | Resposta da LIA com card de ação estruturado |
+| `vazio` | Primeiro uso: saudação + rail de workflow com cards de sugestão |
+| `conversa` | Conversa com mensagens (usuário bolha escura, LIA texto com avatar) |
+| `digitando` | LIA processando (indicador de 3 pontos) |
+| `com-card` | Resposta da LIA com card de ação estruturado (RRP block) |
 | `erro` | Falha de envio com retry |
+
+Golden example: `telas/conversar/conversar.html`.
 
 ## 7. Autenticação / pré-auth (sem shell)
 

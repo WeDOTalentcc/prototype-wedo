@@ -7,6 +7,18 @@
    ============================================================= */
 window.SCREENS = [
   {
+    area: "Conversar",
+    items: [
+      {
+        id: "conversar",
+        titulo: "Conversar (chat da LIA)",
+        arquivo: "telas/conversar/conversar.html",
+        status: "em-revisao",
+        descricao: "Chat da LIA em página cheia: rail de workflow com 22 cards por etapa, conversa com streaming, card de ação e erro de envio.",
+      },
+    ],
+  },
+  {
     area: "Acesso",
     items: [
       {
@@ -58,5 +70,6 @@ window.SCREENS = [
    item do menu, adicionar a linha aqui.
    ============================================================= */
 window.NAV_MAP = {
+  "Conversar": "conversar",
   "Vagas": "vagas-lista",
 };

@@ -44,7 +44,7 @@
   /* ---------- Estrutura do menu (fiel ao BASE_MENU_SECTIONS) ---------- */
   const MENU = [
     { items: [
-      { icon: "messageCircle", label: "Conversar", lia: true },
+      { icon: "messageCircle", label: "Conversar" },
       { icon: "brain", label: "Conversas", cyanIcon: true },
     ]},
     { items: [
@@ -152,12 +152,6 @@
     if (tela) main.querySelector(".content").appendChild(tela);
     document.body.classList.add("app");
 
-    // Conversar abre a LIA (quando lia.js presente) em vez de navegar
-    document.querySelectorAll('.sb-item[data-lia="1"]').forEach((a) => {
-      a.addEventListener("click", (e) => {
-        if (window.Lia) { e.preventDefault(); window.Lia.open(); }
-      });
-    });
     // Colapso simples (visual)
     document.querySelector(".sb-collapse").addEventListener("click", () => {
       document.body.classList.toggle("sb-collapsed");
