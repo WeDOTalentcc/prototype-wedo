@@ -446,5 +446,271 @@
       { id: "erro", label: "Erro de envio", render: stErro },
     ]);
   </script>
+
+  <style>
+    /* ---------- Interações (dropdowns, sugestões, toast) ---------- */
+    .cv-menu { position: absolute; top: calc(100% + 4px); width: 176px; z-index: 60;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 8px;
+      padding: 4px 0; box-shadow: var(--shadow-md); }
+    .cv-menu button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 7px 12px;
+      border: none; background: none; font-size: 13px; color: var(--text-secondary); cursor: pointer;
+      font-family: inherit; text-align: left; }
+    .cv-menu button:hover { background: var(--bg-secondary); }
+    .cv-menu button.danger { color: var(--status-error); }
+    .cv-menu svg { width: 14px; height: 14px; }
+    .conv-head { position: relative; }
+    .rename-input { font-size: 14px; font-weight: 500; font-family: inherit; border: 1px solid var(--wedo-cyan);
+      border-radius: 6px; padding: 2px 8px; outline: none; width: 180px; }
+
+    .sug-panel { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 55;
+      background: var(--bg-primary); border: 1px solid var(--border-subtle); border-radius: 12px;
+      box-shadow: var(--shadow-lg); overflow: hidden; }
+    .sug-head { display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); }
+    .sug-head span { font-size: 11px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: .05em; }
+    .sug-head button { border: none; background: none; padding: 2px; border-radius: 4px;
+      color: var(--text-tertiary); cursor: pointer; display: flex; }
+    .sug-head button:hover { background: var(--interactive-hover); color: var(--text-secondary); }
+    .sug-search { padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); }
+    .sug-search input { width: 100%; border: 1px solid var(--border-subtle); border-radius: 8px;
+      padding: 6px 10px; font-size: 12.5px; font-family: inherit; outline: none; }
+    .sug-list { max-height: 240px; overflow-y: auto; padding: 6px; }
+    .sug-item { width: 100%; text-align: left; border: none; background: none; padding: 7px 10px;
+      border-radius: 8px; font-size: 13px; color: var(--text-primary); cursor: pointer; font-family: inherit;
+      display: flex; align-items: center; gap: 8px; }
+    .sug-item:hover { background: var(--wedo-cyan-bg); }
+    .sug-item svg { width: 13px; height: 13px; color: var(--wedo-cyan-dark); flex: none; }
+    .sug-hint { padding: 6px 12px 8px; font-size: 11px; color: var(--text-tertiary); }
+    .sug-cat { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      color: var(--text-tertiary); padding: 8px 10px 2px; display: flex; align-items: center; gap: 6px; }
+    .sug-cat svg { width: 12px; height: 12px; }
+    .input-zone { position: relative; }
+
+    .attach-chip { display: inline-flex; align-items: center; gap: 8px; margin: 10px 12px 0;
+      padding: 6px 10px; border-radius: 8px; background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle); font-size: 12.5px; color: var(--text-secondary); }
+    .attach-chip svg { width: 14px; height: 14px; }
+    .attach-chip button { border: none; background: none; color: var(--text-tertiary); cursor: pointer;
+      display: flex; padding: 1px; border-radius: 4px; }
+    .attach-chip button:hover { color: var(--text-secondary); background: var(--interactive-hover); }
+
+    .tool.rec { color: var(--status-error); background: var(--status-error-bg); animation: recpulse 1.2s infinite; }
+    @keyframes recpulse { 50% { opacity: .6; } }
+
+    .fb-pop { position: absolute; z-index: 70; width: 280px; background: var(--bg-primary);
+      border: 1px solid var(--border-subtle); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 10px; }
+    .fb-pop .cats { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .fb-pop .cats button { border: 1px solid var(--border-default); background: none; border-radius: 999px;
+      padding: 3px 10px; font-size: 11.5px; color: var(--text-secondary); cursor: pointer; font-family: inherit; }
+    .fb-pop .cats button.on { border-color: var(--wedo-cyan); color: var(--wedo-cyan-dark); background: var(--wedo-cyan-bg); }
+    .fb-pop textarea { width: 100%; border: 1px solid var(--border-subtle); border-radius: 8px;
+      font-size: 12px; padding: 6px 8px; min-height: 56px; font-family: inherit; resize: none; outline: none; }
+    .fb-pop .row { display: flex; justify-content: flex-end; gap: 6px; margin-top: 8px; }
+    .fb-pop .row .c { border: none; background: none; font-size: 12px; color: var(--text-secondary);
+      padding: 4px 8px; border-radius: 6px; cursor: pointer; font-family: inherit; }
+    .fb-pop .row .s { border: none; background: var(--bg-inverse); color: var(--text-inverse); font-size: 12px;
+      padding: 4px 10px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+    .toast-box { position: fixed; bottom: 76px; right: 24px; z-index: 400; display: flex;
+      flex-direction: column; gap: 8px; }
+    .toast { background: var(--bg-inverse); color: var(--text-inverse); font-size: 13px;
+      padding: 10px 16px; border-radius: 10px; box-shadow: var(--shadow-float);
+      animation: toast-in .2s ease-out; }
+    @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  </style>
+  <div class="toast-box" id="toasts"></div>
+  <script>
+    /* =============== Ações reais (replicadas do produto) =============== */
+    const I14 = (p) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+    const P_PIN = '<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>';
+    const P_PEN = '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>';
+    const P_NOTE = '<path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z"/><path d="M15 3v4a2 2 0 0 0 2 2h4"/>';
+    const P_ARCH = '<rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>';
+    const P_TRASH = '<path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>';
+    const P_CLIP = '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/>';
+    const P_X = '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>';
+    const P_ZAP = '<path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/>';
+    const P_BRIEF = '<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>';
+    const P_USERS = '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>';
+
+    function toast(msg) {
+      const t = document.createElement("div");
+      t.className = "toast"; t.textContent = msg;
+      document.getElementById("toasts").appendChild(t);
+      setTimeout(() => t.remove(), 2600);
+    }
+
+    /* ---------- Dropdown da conversa (chevron do título e ⋯) ---------- */
+    let pinned = false;
+    function convMenu(anchorRight) {
+      closeMenus();
+      const head = document.querySelector(".conv-head");
+      const m = document.createElement("div");
+      m.className = "cv-menu";
+      m.style[anchorRight ? "right" : "left"] = anchorRight ? "0" : "24px";
+      m.innerHTML = `
+        <button data-a="pin">${I14(P_PIN)}${pinned ? "Desafixar" : "Fixar"}</button>
+        <button data-a="rename">${I14(P_PEN)}Renomear</button>
+        <button data-a="note">${I14(P_NOTE)}Adicionar nota</button>
+        <button data-a="arch">${I14(P_ARCH)}Arquivar</button>
+        <button data-a="del" class="danger">${I14(P_TRASH)}Excluir</button>`;
+      head.appendChild(m);
+      m.addEventListener("click", (e) => {
+        const a = e.target.closest("button")?.dataset.a;
+        if (!a) return;
+        closeMenus();
+        if (a === "pin") { pinned = !pinned; toast(pinned ? "Conversa fixada" : "Conversa desafixada"); }
+        if (a === "rename") startRename();
+        if (a === "note") toast("Nota adicionada à conversa");
+        if (a === "arch") { toast("Conversa arquivada"); Proto.apply("vazio"); }
+        if (a === "del") { toast("Conversa excluída"); Proto.apply("vazio"); }
+      });
+      setTimeout(() => document.addEventListener("click", closeMenus, { once: true }));
+    }
+    function closeMenus() { document.querySelectorAll(".cv-menu, .fb-pop").forEach((x) => x.remove()); }
+    function startRename() {
+      const nm = document.querySelector(".conv-head .nm");
+      const cur = nm.textContent;
+      nm.innerHTML = `<input class="rename-input" value="${cur}">`;
+      const inp = nm.querySelector("input");
+      inp.focus(); inp.select();
+      const finish = (save) => { nm.textContent = save && inp.value.trim() ? inp.value.trim() : cur; if (save) toast("Conversa renomeada"); };
+      inp.addEventListener("keydown", (e) => { if (e.key === "Enter") finish(true); if (e.key === "Escape") finish(false); });
+      inp.addEventListener("blur", () => finish(true));
+    }
+    document.querySelector(".conv-head .nm").addEventListener("click", (e) => { e.stopPropagation(); convMenu(false); });
+    document.querySelector(".conv-head .chev").addEventListener("click", (e) => { e.stopPropagation(); convMenu(false); });
+    document.querySelector('.conv-actions button[title="Mais opções"]').addEventListener("click", (e) => { e.stopPropagation(); convMenu(true); });
+
+    /* ---------- Expandir (modo de exibição) ---------- */
+    document.querySelector('.conv-actions button[title="Expandir"]').addEventListener("click", () => {
+      document.body.classList.toggle("sb-collapsed");
+      toast(document.body.classList.contains("sb-collapsed") ? "Modo tela cheia" : "Modo padrão");
+    });
+
+    /* ---------- 💡 Sugestões de consulta (insere no prompt) ---------- */
+    const SUG_QUERIES = [
+      "Quais vagas estão paradas há mais de 15 dias?",
+      "Resuma o funil da vaga de Backend Ruby",
+      "Quem são os 5 melhores candidatos de QA?",
+      "Quantas entrevistas tenho esta semana?",
+      "Compare os finalistas da vaga de Product Manager",
+      "Quais candidatos aguardam retorno há mais de 3 dias?",
+      "Gere o relatório semanal de recrutamento",
+      "Qual o custo de IA deste mês?",
+    ];
+    const lightBtn = document.querySelector('.input-foot .grp .tool[title="Sugestões de consulta"]');
+    lightBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const old = document.querySelector(".sug-panel");
+      if (old) { old.remove(); return; }
+      const p = document.createElement("div");
+      p.className = "sug-panel";
+      p.innerHTML = `
+        <div class="sug-head"><span>Sugestões de consulta</span><button aria-label="Fechar sugestões">${I14(P_X)}</button></div>
+        <div class="sug-search"><input placeholder="Buscar consulta..."></div>
+        <div class="sug-list">${SUG_QUERIES.map((q) => `<button class="sug-item">${I14(P_ZAP)}${q}</button>`).join("")}</div>
+        <div class="sug-hint">Clique para inserir no prompt</div>`;
+      document.querySelector(".input-zone").appendChild(p);
+      p.querySelector(".sug-head button").addEventListener("click", () => p.remove());
+      p.querySelector(".sug-search input").addEventListener("input", (ev) => {
+        const v = ev.target.value.toLowerCase();
+        p.querySelectorAll(".sug-item").forEach((b) => { b.hidden = !b.textContent.toLowerCase().includes(v); });
+      });
+      p.querySelectorAll(".sug-item").forEach((b) => b.addEventListener("click", () => {
+        cin.value = b.textContent.trim(); cin.dispatchEvent(new Event("input")); cin.focus(); p.remove();
+      }));
+    });
+
+    /* ---------- Menu do + : anexar e mencionar ---------- */
+    const plusItems = document.querySelectorAll("#plusmenu button");
+    plusItems[0].addEventListener("click", () => { // Anexar
+      document.getElementById("plusmenu").hidden = true;
+      const box = document.querySelector(".input-box");
+      if (box.querySelector(".attach-chip")) return;
+      box.insertAdjacentHTML("afterbegin",
+        `<span class="attach-chip">${I14(P_CLIP)}curriculo-ana-beatriz-souza.pdf
+          <button aria-label="Remover arquivo" onclick="this.parentElement.remove()">${I14(P_X)}</button></span>`);
+      toast("Arquivo anexado");
+    });
+    plusItems[1].addEventListener("click", (e) => { // Mencionar
+      e.stopPropagation();
+      document.getElementById("plusmenu").hidden = true;
+      const p = document.createElement("div");
+      p.className = "sug-panel";
+      const vagas = ["Desenvolvedor(a) Backend Ruby", "QA Engineer", "Product Manager"];
+      const cands = ["Ana Beatriz Souza", "Carlos Eduardo Lima", "Mariana Ferreira"];
+      p.innerHTML = `
+        <div class="sug-head"><span>Mencionar</span><button>${I14(P_X)}</button></div>
+        <div class="sug-list">
+          <div class="sug-cat">${I14(P_BRIEF)}Vagas</div>
+          ${vagas.map((v) => `<button class="sug-item" data-m="${v}">${I14(P_BRIEF)}${v}</button>`).join("")}
+          <div class="sug-cat">${I14(P_USERS)}Candidatos</div>
+          ${cands.map((v) => `<button class="sug-item" data-m="${v}">${I14(P_USERS)}${v}</button>`).join("")}
+        </div>`;
+      document.querySelector(".input-zone").appendChild(p);
+      p.querySelector(".sug-head button").addEventListener("click", () => p.remove());
+      p.querySelectorAll(".sug-item").forEach((b) => b.addEventListener("click", () => {
+        cin.value = (cin.value ? cin.value + " " : "") + "@" + b.dataset.m + " ";
+        cin.dispatchEvent(new Event("input")); cin.focus(); p.remove();
+      }));
+    });
+
+    /* ---------- Mic: gravação simulada + transcrição ---------- */
+    const micBtn = document.querySelector('.input-foot .tool[title="Gravar áudio"]');
+    micBtn.addEventListener("click", () => {
+      if (micBtn.classList.contains("rec")) return;
+      micBtn.classList.add("rec");
+      setTimeout(() => {
+        micBtn.classList.remove("rec");
+        cin.value = (cin.value ? cin.value + " " : "") + "Buscar desenvolvedores Python disponíveis em São Paulo";
+        cin.dispatchEvent(new Event("input")); cin.focus();
+      }, 2200);
+    });
+
+    /* ---------- Ações da mensagem (delegação no #msgs) ---------- */
+    msgs.addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const title = btn.title;
+      const mWrap = btn.closest(".m-lia");
+      if (title === "Copiar") {
+        const tx = mWrap?.querySelector(".tx")?.textContent || "";
+        navigator.clipboard?.writeText(tx);
+        toast("Resposta copiada");
+      } else if (title === "Inserir no chat") {
+        cin.value = mWrap?.querySelector(".tx")?.textContent || "";
+        cin.dispatchEvent(new Event("input")); cin.focus();
+      } else if (title === "Não útil") {
+        closeMenus();
+        const pop = document.createElement("div");
+        pop.className = "fb-pop";
+        pop.innerHTML = `
+          <div class="cats">${["Incorreta", "Incompleta", "Fora do contexto", "Outro"].map((c) =>
+            `<button onclick="this.classList.toggle('on')">${c}</button>`).join("")}</div>
+          <textarea placeholder="Conte o que poderia melhorar (opcional)"></textarea>
+          <div class="row"><button class="c">Cancelar</button><button class="s">Enviar</button></div>`;
+        const r = btn.getBoundingClientRect();
+        pop.style.left = Math.min(r.left, window.innerWidth - 300) + "px";
+        pop.style.top = (r.bottom + 6) + "px";
+        pop.style.position = "fixed";
+        document.body.appendChild(pop);
+        pop.querySelector(".c").addEventListener("click", () => pop.remove());
+        pop.querySelector(".s").addEventListener("click", () => { pop.remove(); toast("Obrigado pelo feedback!"); });
+      } else if (title === "Gerar novamente") {
+        const tx = mWrap?.querySelector(".tx")?.textContent || "";
+        mWrap.remove(); addTyping();
+        later(() => streamLia(tx), 1000);
+      } else if (btn.classList.contains("b1")) { // Revisar e publicar
+        location.href = "../vagas/lista-de-vagas.html";
+      } else if (btn.classList.contains("b2")) { // Editar
+        addUser("Quero editar a vaga antes de publicar");
+        addTyping();
+        later(() => streamLia("Claro! O que você quer ajustar? Posso mudar requisitos, faixa salarial, benefícios ou as perguntas de triagem — é só me dizer."), 1200);
+      }
+    });
+  </script>
+
 </body>
 </html>
