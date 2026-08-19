@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  TEMPLATE DE TELA — copie este arquivo para telas/<area>/<nome>.html
+  Passos (detalhe no CLAUDE.md):
+    1. Copiar para a pasta da área, em kebab-case.
+    2. Trocar <title>, data-titulo e data-screen-id.
+    3. Montar o conteúdo dentro de <div id="tela"> usando os
+       componentes do base.css (nunca CSS com cor hex local).
+    4. Registrar TODOS os estados obrigatórios em Proto.states().
+    5. Registrar a tela no screens.js.
+  ATENÇÃO: os caminhos abaixo assumem telas/<area>/ (2 níveis).
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nome da Tela — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <!-- data-nav = label do item do menu do produto que fica ativo nesta tela -->
+  <div id="shell" data-nav="Nome no Menu"></div>
+
+  <div id="tela">
+    <div class="page-head"><h1>Nome da Tela</h1><div class="spacer"></div></div>
+    <!-- Conteúdo da tela aqui (componentes do base.css) -->
+  </div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script>
+    // LIA sempre presente nas telas logadas; roteiro contextual da tela:
+    Lia.mount({ roteiro: [
+      { de: "user", texto: "Pergunta típica do recrutador nesta tela" },
+      { de: "lia", texto: "Resposta da LIA com ação contextual.", digitando: 1400 },
+    ]});
+    const m = Mock.seed(1); // seed fixa por tela — dados estáveis
+
+    function renderPadrao() { /* ... */ }
+    function renderVazio() { /* ... */ }
+
+    Proto.states([
+      { id: "padrao", label: "Padrão", render: renderPadrao },
+      { id: "vazio", label: "0 registros", render: renderVazio },
+      // ...demais estados obrigatórios do padrão da tela (docs/PATTERNS.md)
+    ]);
+  </script>
+</body>
+</html>

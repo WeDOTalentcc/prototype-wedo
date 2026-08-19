@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  Boas-vindas (pós-login) — réplica pixel-faithful
+  Fonte: src/app/[locale]/login/welcome/_components/WelcomeSteps.tsx
+  Sequência animada: intro escura c/ cérebro → íris → cérebro pulsa →
+  typewriter → "Como funciona" (5 passos) → tagline → logo → Olá + CTA.
+  Estados da barra permitem pular para cada momento ou re-assistir tudo.
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Boas-vindas — Protótipo WeDOTalent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Inter, var(--font-sans); color: var(--text-primary); background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased; min-height: 100vh; overflow: hidden; }
+
+    .stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .inner { width: 100%; max-width: 768px; padding: 0 32px; display: flex; flex-direction: column; align-items: center; }
+
+    /* ---------- Intro escura + íris ---------- */
+    .intro { position: fixed; inset: 0; background: var(--text-primary); display: flex; align-items: center;
+      justify-content: center; z-index: 50; }
+    .intro.iris { opacity: 0; transform: scale(0); border-radius: 50%;
+      transition: opacity .8s ease-in-out, transform .8s ease-in-out, border-radius .8s ease-in-out; }
+    .intro svg { width: 96px; height: 96px; color: #FFFFFF; }
+
+    /* ---------- Cérebro + typewriter ---------- */
+    .brain-row { display: flex; align-items: center; gap: 24px; transition: opacity .5s ease-out, transform .5s ease-out; }
+    .brain-row.moved { transform: translateX(-100px); }
+    .brain-row.small { transform: scale(.5); }
+    .brain-row.hidden-out { opacity: 0; }
+    .brain-ico { color: var(--wedo-cyan); }
+    .brain-ico svg { width: 80px; height: 80px; }
+    .brain-ico.pulse { animation: brain-pulse .4s ease-in-out 3; }
+    @keyframes brain-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: .7; } }
+    .typed { display: flex; flex-direction: column; gap: 8px; }
+    .typed .l1 { font-size: 24px; font-weight: 300; }
+    .typed .l2 { font-size: 18px; color: var(--text-secondary); }
+    .caret { animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ---------- Como funciona ---------- */
+    .flow { width: 100%; max-width: 672px; transition: opacity .6s ease-out; }
+    .flow.hidden-out { opacity: 0; }
+    .flow-head { text-align: center; margin-bottom: 40px; }
+    .flow-head .kicker { font-size: 14px; font-weight: 500; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: .18em; margin-bottom: 12px; }
+    .flow-head h2 { font-size: 30px; font-weight: 300; }
+    .step { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 32px;
+      opacity: 0; transform: translateY(20px); transition: opacity .4s ease-out, transform .4s ease-out; }
+    .step:last-of-type { margin-bottom: 0; }
+    .step.on { opacity: 1; transform: translateY(0); }
+    .step .col-ico { display: flex; flex-direction: column; align-items: center; }
+    .step .circle { width: 48px; height: 48px; border-radius: 50%; background: rgb(96 190 209 / .1);
+      border: 1px solid rgb(96 190 209 / .3); display: flex; align-items: center; justify-content: center; flex: none; }
+    .step .circle svg { width: 20px; height: 20px; color: var(--wedo-cyan); }
+    .step .line { width: 1px; height: 32px; background: rgb(96 190 209 / .2); margin-top: 8px;
+      transform-origin: top; transform: scaleY(0); }
+    .step.on .line { animation: line-grow .3s ease-out forwards; }
+    @keyframes line-grow { to { transform: scaleY(1); } }
+    .step .body { padding-top: 8px; }
+    .step .head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .step .num { font-size: 12px; font-family: var(--font-mono); color: rgb(96 190 209 / .6); }
+    .step h3 { font-size: 18px; font-weight: 600; }
+    .step p { font-size: 14px; color: var(--text-secondary); line-height: 1.62; margin-left: 32px; }
+    .tagline { text-align: center; margin-top: 40px; font-size: 20px; font-weight: 300; line-height: 1.62;
+      opacity: 0; transform: translateY(16px); transition: opacity .5s ease-out, transform .5s ease-out; }
+    .tagline.on { opacity: 1; transform: translateY(0); }
+    .tagline b { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; }
+
+    /* ---------- Final: logo + Olá + CTA ---------- */
+    .final { display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center; }
+    .final img { width: 180px; height: auto; }
+    .final .greet { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .final h1 { font-size: 30px; font-weight: 400; }
+    .final h1 span { color: var(--text-secondary); font-weight: 600; }
+    .final .p1 { font-size: 18px; max-width: 576px; line-height: 1.62; }
+    .final .p2 { font-size: 16px; color: var(--text-secondary); max-width: 576px; line-height: 1.62; }
+    .final .go { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .final .go .ask { font-size: 18px; font-weight: 500; }
+    .btn-start { background: var(--text-primary); color: #FFFFFF; border: none; border-radius: 6px;
+      padding: 16px 32px; font-size: 18px; font-weight: 500; font-family: inherit; cursor: pointer; transition: opacity .3s; }
+    .btn-start:hover { opacity: .92; }
+    .dont-show { display: flex; align-items: center; gap: 8px; cursor: pointer; margin-top: 8px; }
+    .dont-show .box { width: 16px; height: 16px; border-radius: 6px; border: 2px solid var(--border-medium);
+      display: flex; align-items: center; justify-content: center; transition: background .2s, border-color .2s; }
+    .dont-show.checked .box { background: var(--text-primary); border-color: var(--text-primary); }
+    .dont-show .box svg { width: 10px; height: 10px; color: #FFF; display: none; }
+    .dont-show.checked .box svg { display: block; }
+    .dont-show span { font-size: 14px; color: var(--text-secondary); transition: color .2s; }
+    .dont-show:hover span, .dont-show.checked span { color: var(--text-primary); }
+
+    .fade-in { animation: fade-in .4s ease-out; }
+    @keyframes fade-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+    .zoom-in { animation: zoom-in 1s ease-out; }
+    @keyframes zoom-in { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: scale(1); } }
+
+    /* Carregando (bootstrap) */
+    .boot { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center;
+      justify-content: center; z-index: 60; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .brain-ico.pulse, .caret, .fade-in, .zoom-in, .spin { animation: none !important; }
+    }
+
+    /* barra do proto */
+    .proto-bar { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: var(--bg-inverse);
+      color: #fff; border-radius: 999px; box-shadow: 0 8px 24px rgb(0 0 0 / .14); display: flex; align-items: center;
+      gap: 2px; padding: 5px; z-index: 200; font-size: 12.5px; max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none; }
+    .proto-bar::-webkit-scrollbar { display: none; }
+    .proto-bar .pb-label { padding: 0 10px; font-weight: 700; color: var(--wedo-cyan-light); white-space: nowrap; }
+    .proto-bar button { background: transparent; border: none; color: rgb(255 255 255 / .75); padding: 6px 12px;
+      border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap; cursor: pointer; font-family: inherit; }
+    .proto-bar button:hover { background: rgb(255 255 255 / .12); color: #fff; }
+    .proto-bar button.active { background: var(--wedo-cyan); color: var(--bg-inverse); }
+    .proto-bar .pb-sep { width: 1px; height: 18px; background: rgb(255 255 255 / .2); margin: 0 4px; flex: none; }
+    .proto-bar.collapsed button:not(.pb-toggle), .proto-bar.collapsed .pb-label, .proto-bar.collapsed .pb-sep { display: none; }
+  </style>
+</head>
+<body>
+  <div class="stage"><div class="inner" id="inner"></div></div>
+  <div class="intro" id="intro" style="display:none"></div>
+  <div class="boot" id="boot" style="display:none">
+    <svg class="spin" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="color:var(--text-secondary)"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+  </div>
+
+  <script src="../../scripts/proto.js"></script>
+  <script>
+    /* ---------- Ícones (lucide) ---------- */
+    const icoBrain = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></svg>';
+    const icoBriefcase = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/></svg>';
+    const icoFile = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>';
+    const icoGlobe = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+    const icoMsg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
+    const icoCal = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/></svg>';
+
+    const FLOW = [
+      [icoBriefcase, "01", "Abra uma vaga", "Descreva o perfil ideal e os requisitos da posição."],
+      [icoFile, "02", "Crie seu roteiro de triagem", "Defina as perguntas e critérios de avaliação."],
+      [icoGlobe, "03", "A IA busca candidatos", "Busca local e global por talentos compatíveis."],
+      [icoMsg, "04", "Dispare as triagens", "A IA conversa com centenas de candidatos em horas."],
+      [icoCal, "05", "Entrevistas agendadas", "Aguarde a IA agendar entrevistas para você."],
+    ];
+    const TEXT1 = "Tudo pronto por aqui.";
+    const TEXT2 = "A partir de agora, vamos trabalhar juntos.";
+    const USER = "Paulo";
+
+    const inner = document.getElementById("inner");
+    const intro = document.getElementById("intro");
+    const boot = document.getElementById("boot");
+    let timers = [];
+    const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+    function reset() {
+      timers.forEach(clearTimeout); timers = [];
+      inner.innerHTML = ""; intro.style.display = "none"; intro.classList.remove("iris");
+      intro.innerHTML = icoBrain; boot.style.display = "none";
+    }
+
+    /* ---------- Blocos ---------- */
+    function brainRow({ moved = false, small = false, pulse = false, typed = null } = {}) {
+      inner.innerHTML = `<div class="brain-row ${moved ? "moved" : ""} ${small ? "small" : ""}" id="brow">
+        <div class="brain-ico ${pulse ? "pulse" : ""}" style="width:80px;height:80px">${icoBrain}</div>
+        ${typed !== null ? `<div class="typed"><p class="l1" id="t1"></p><p class="l2" id="t2"></p></div>` : ""}
+      </div>`;
+    }
+
+    function flowBlock({ steps = 5, tagline = false, animate = false } = {}) {
+      inner.innerHTML = `<div class="flow" id="flow">
+        <div class="flow-head fade-in"><p class="kicker">Como funciona</p><h2>Simples assim.</h2></div>
+        <div>${FLOW.map(([ico, num, titulo, desc], i) => `
+          <div class="step ${!animate && i < steps ? "on" : ""}" data-i="${i}">
+            <div class="col-ico"><div class="circle">${ico}</div>${i < FLOW.length - 1 ? '<div class="line"></div>' : ""}</div>
+            <div class="body"><div class="head"><span class="num">${num}</span><h3>${titulo}</h3></div><p>${desc}</p></div>
+          </div>`).join("")}</div>
+        <p class="tagline ${tagline && !animate ? "on" : ""}" id="tagline">Recrutamento humano, impulsionado pela <b>WeDoTalent</b>.</p>
+      </div>`;
+    }
+
+    function finalBlock({ complete = true, zoom = false } = {}) {
+      inner.innerHTML = `<div class="final ${zoom ? "zoom-in" : "fade-in"}">
+        <img src="../../assets/logos/wedo-logo.png" alt="WeDo Talent">
+        <div class="greet fade-in">
+          <h1>Olá, <span>${USER}</span></h1>
+          <p class="p1">Bem-vindo(a) à nova era do recrutamento inteligente e automatizado.</p>
+          <p class="p2">A WeDOTalent vai te dar superpoderes para otimizar seu trabalho de recrutador(a).</p>
+        </div>
+        ${complete ? `<div class="go fade-in">
+          <p class="ask">Vamos começar?</p>
+          <button class="btn-start" onclick="location.href='../vagas/lista-de-vagas.html'">Clique aqui para começar →</button>
+          <label class="dont-show" id="dontshow">
+            <span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span>
+            <span>Não mostrar novamente</span>
+          </label></div>` : ""}
+      </div>`;
+      const ds = document.getElementById("dontshow");
+      if (ds) ds.addEventListener("click", () => ds.classList.toggle("checked"));
+    }
+
+    function typewriter(onDone) {
+      const t1 = document.getElementById("t1"), t2 = document.getElementById("t2");
+      let line = 1, i = 0;
+      const iv = setInterval(() => {
+        if (line === 1) {
+          t1.innerHTML = TEXT1.slice(0, ++i) + (i < TEXT1.length ? '<span class="caret">|</span>' : "");
+          if (i >= TEXT1.length) { line = 2; i = 0; }
+        } else {
+          t2.innerHTML = TEXT2.slice(0, ++i) + (i < TEXT2.length ? '<span class="caret">|</span>' : "");
+          if (i >= TEXT2.length) { clearInterval(iv); later(onDone, 1500); }
+        }
+      }, 50);
+      timers.push(iv);
+    }
+
+    /* ---------- Sequência completa (fiel aos timings do WelcomeSteps) ---------- */
+    function playAll() {
+      reset();
+      later(() => { intro.style.display = "flex"; }, 200);
+      later(() => intro.classList.add("iris"), 800);
+      later(() => { intro.style.display = "none"; brainRow({ small: true }); }, 1800);
+      later(() => brainRow({ pulse: true }), 2200);
+      later(() => brainRow({ moved: true, typed: true }), 3900);
+      later(() => typewriter(() => {
+        document.getElementById("brow").classList.add("hidden-out");
+        later(() => {
+          flowBlock({ steps: 0, animate: true });
+          let s = 0;
+          const iv = setInterval(() => {
+            document.querySelector(`.step[data-i="${s}"]`).classList.add("on");
+            if (++s >= FLOW.length) {
+              clearInterval(iv);
+              later(() => document.getElementById("tagline").classList.add("on"), 800);
+              later(() => document.getElementById("flow").classList.add("hidden-out"), 3800);
+              later(() => finalBlock({ complete: false, zoom: true }), 4600);
+              later(() => finalBlock({ complete: true }), 6400);
+            }
+          }, 500);
+          timers.push(iv);
+        }, 1800);
+      }), 4500);
+    }
+
+    Proto.states([
+      { id: "animacao", label: "▶ Sequência completa", render: playAll },
+      { id: "digitando", label: "Typewriter", render: () => { reset(); brainRow({ moved: true, typed: true }); typewriter(() => {}); } },
+      { id: "como-funciona", label: "Como funciona", render: () => { reset(); flowBlock({ steps: 5, tagline: true }); } },
+      { id: "boas-vindas", label: "Olá + CTA final", render: () => { reset(); finalBlock({ complete: true }); } },
+      { id: "carregando", label: "Carregando", render: () => { reset(); boot.style.display = "flex"; } },
+    ]);
+  </script>
+</body>
+</html>

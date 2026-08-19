@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<!-- Placeholder navegável: destino dos links de menu cujas telas ainda
+     não foram desenhadas. Lê ?titulo= da URL. Mantém o menu real vivo. -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Em construção — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../styles/tokens.css">
+  <link rel="stylesheet" href="../styles/base.css">
+</head>
+<body>
+  <div id="shell" data-nav=""></div>
+  <div id="tela">
+    <div class="empty-state" style="padding-top: 120px">
+      <div class="ico">🏗️</div>
+      <h3 id="titulo">Tela em construção</h3>
+      <p>Esta tela ainda não foi desenhada no protótipo. Peça para o Claude Code criá-la
+         e ela passa a abrir aqui, com todos os estados na barra flutuante.</p>
+      <a class="btn btn-secondary" href="../index.html">← Ver telas prontas</a>
+    </div>
+  </div>
+  <script src="../screens.js"></script>
+  <script src="../scripts/shell.js"></script>
+  <script src="../scripts/lia.js"></script>
+  <script>
+    const titulo = new URL(location.href).searchParams.get("titulo");
+    if (titulo) {
+      document.getElementById("titulo").textContent = titulo + " — em construção";
+      document.title = titulo + " (em construção) — Protótipo WeDOTalent";
+      document.getElementById("shell")?.setAttribute("data-nav", titulo);
+    }
+    Lia.mount({});
+  </script>
+</body>
+</html>

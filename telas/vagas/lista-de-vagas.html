@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  TELA EXEMPLAR (golden example) — Lista de Vagas
+  Referência de COMO toda tela de tabela deve ser construída:
+  shell + componentes do base.css + Mock com seed fixa +
+  Proto.states com a matriz completa de estados de tabela.
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de Vagas — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+</head>
+<body>
+  <div id="shell" data-nav="Vagas"></div>
+
+  <div id="tela">
+    <div class="page-head">
+      <h1>Vagas</h1>
+      <span class="badge badge-gray" id="chip-ativas"></span>
+      <div class="spacer"></div>
+    </div>
+    <div class="kpis" id="kpis" style="margin-bottom: var(--space-5)"></div>
+
+    <div class="page-actions">
+      <div class="search"><input class="input" id="busca" placeholder="Buscar vaga, recrutador..."></div>
+      <select class="select" style="width:170px" id="filtro-status">
+        <option>Todos os status</option><option>Ativa</option><option>Rascunho</option>
+        <option>Pausada</option><option>Em aprovação</option><option>Encerrada</option>
+      </select>
+      <div class="spacer"></div>
+      <button class="btn btn-ai">✦ Criar vaga com a LIA</button>
+      <button class="btn btn-primary">+ Nova vaga</button>
+    </div>
+
+    <div class="table-wrap" id="tabela"></div>
+  </div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script>
+    Lia.mount({
+      roteiro: [
+        { de: "user", texto: "LIA, quero abrir uma vaga de Desenvolvedor Backend Ruby para o time de Tecnologia" },
+        { de: "lia", texto: "Perfeito! Vou montar a vaga de Desenvolvedor(a) Backend Ruby para Tecnologia. Já puxei a faixa salarial do nível Pleno do seu catálogo e sugeri os benefícios padrão da empresa.", digitando: 1600 },
+        { de: "lia", texto: "Quer que eu gere também o roteiro de triagem com perguntas eliminatórias, ou prefere revisar a descrição primeiro?", digitando: 1100 },
+        { de: "user", texto: "Gera o roteiro de triagem" },
+        { de: "lia", texto: "Feito ✦ Criei 7 perguntas de triagem (2 eliminatórias). A vaga está em Rascunho na sua lista — é só revisar e publicar quando quiser.", digitando: 1800 },
+      ],
+    });
+    const m = Mock.seed(7);
+    const PAGE_SIZE = 10;
+    const statusBadge = {
+      "Ativa": "badge-green", "Rascunho": "badge-gray", "Pausada": "badge-orange",
+      "Em aprovação": "badge-cyan", "Encerrada": "badge-gray",
+    };
+
+    function kpis(vagas) {
+      const ativas = vagas.filter(v => v.status === "Ativa").length;
+      const chip = document.getElementById("chip-ativas");
+      chip.textContent = ativas + " ativas";
+      chip.style.display = vagas.length ? "" : "none";
+      document.getElementById("kpis").innerHTML = `
+        <div class="kpi"><div class="v">${vagas.length}</div><div class="l">Vagas totais</div></div>
+        <div class="kpi"><div class="v">${ativas}</div><div class="l">Ativas</div></div>
+        <div class="kpi"><div class="v">${vagas.reduce((s, v) => s + v.candidatos, 0)}</div><div class="l">Candidatos no funil</div></div>
+        <div class="kpi"><div class="v" style="color:var(--wedo-cyan-dark)">${vagas.reduce((s, v) => s + v.novosCandidatos, 0)}</div><div class="l">Novos esta semana</div></div>`;
+    }
+
+    function linha(v) {
+      return `<tr>
+        <td><div class="cell-person"><span class="avatar">${v.titulo.slice(0, 1)}</span>
+          <div><div class="nm">${v.titulo}</div><div class="sub">${v.depto} · ${v.cidade}</div></div></div></td>
+        <td><span class="badge ${statusBadge[v.status]}">${v.status}</span></td>
+        <td class="num">${v.candidatos}${v.novosCandidatos ? ` <span class="badge badge-cyan">+${v.novosCandidatos}</span>` : ""}</td>
+        <td>${v.recrutador.split(" ").slice(0, 2).join(" ")}</td>
+        <td class="num">${v.prazo}</td>
+        <td class="num"><button class="icon-btn" title="Ações">⋯</button></td>
+      </tr>`;
+    }
+
+    function tabela(vagas, pagina = 1) {
+      const total = vagas.length;
+      const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+      const slice = vagas.slice((pagina - 1) * PAGE_SIZE, pagina * PAGE_SIZE);
+      const pgBtns = Array.from({ length: pages }, (_, i) => i + 1)
+        .filter(p => p === 1 || p === pages || Math.abs(p - pagina) <= 1)
+        .reduce((acc, p, i, arr) => acc + (i && p - arr[i - 1] > 1 ? `<span class="page-btn" style="cursor:default">…</span>` : "") +
+          `<button class="page-btn ${p === pagina ? "active" : ""}" data-pg="${p}">${p}</button>`, "");
+
+      document.getElementById("tabela").innerHTML = `
+        <table class="tbl">
+          <thead><tr><th>Vaga</th><th>Status</th><th class="num">Candidatos</th><th>Recrutador</th><th class="num">Prazo</th><th></th></tr></thead>
+          <tbody>${slice.map(linha).join("")}</tbody>
+        </table>
+        ${total > PAGE_SIZE ? `<div class="tbl-footer">
+          <span>Mostrando ${(pagina - 1) * PAGE_SIZE + 1}–${Math.min(pagina * PAGE_SIZE, total)} de ${total} vagas</span>
+          <div class="pagination">
+            <button class="page-btn" data-pg="${pagina - 1}" ${pagina === 1 ? "disabled" : ""}>‹</button>
+            ${pgBtns}
+            <button class="page-btn" data-pg="${pagina + 1}" ${pagina === pages ? "disabled" : ""}>›</button>
+          </div></div>` : ""}`;
+
+      document.querySelectorAll(".page-btn[data-pg]").forEach(b =>
+        b.addEventListener("click", () => !b.disabled && tabela(vagas, +b.dataset.pg)));
+    }
+
+    /* ---------- Estados ---------- */
+    const poucos = m.lista(6, m.vaga);
+    const muitos = m.lista(87, m.vaga);
+
+    function renderPadrao() { kpis(poucos); tabela(poucos); }
+    function renderMuitos() { kpis(muitos); tabela(muitos); }
+
+    function renderVazio() {
+      kpis([]);
+      document.getElementById("tabela").innerHTML = `
+        <div class="empty-state">
+          <div class="ico">📋</div>
+          <h3>Nenhuma vaga criada ainda</h3>
+          <p>Crie sua primeira vaga manualmente ou peça para a LIA montar tudo a partir de uma descrição.</p>
+          <button class="btn btn-ai" style="margin-right:8px">✦ Criar vaga com a LIA</button>
+          <button class="btn btn-primary">+ Nova vaga</button>
+        </div>`;
+    }
+
+    function renderBuscaSemResultado() {
+      kpis(poucos);
+      document.getElementById("busca").value = "engenheiro aeroespacial";
+      document.getElementById("tabela").innerHTML = `
+        <div class="empty-state">
+          <div class="ico">⌕</div>
+          <h3>Nenhum resultado para “engenheiro aeroespacial”</h3>
+          <p>Tente outros termos ou limpe os filtros aplicados.</p>
+          <button class="btn btn-secondary">Limpar filtros</button>
+        </div>`;
+    }
+
+    function renderCarregando() {
+      document.getElementById("kpis").innerHTML =
+        Array(4).fill('<div class="kpi skeleton" style="height:74px"></div>').join("");
+      document.getElementById("tabela").innerHTML =
+        `<div style="padding:var(--space-4);display:flex;flex-direction:column;gap:10px">` +
+        Array(8).fill('<div class="skeleton" style="height:38px"></div>').join("") + "</div>";
+    }
+
+    function renderErro() {
+      kpis([]);
+      document.getElementById("tabela").innerHTML = `
+        <div style="padding:var(--space-5)">
+          <div class="error-banner">⚠ Não foi possível carregar as vagas. Verifique sua conexão e tente novamente.
+            <span style="flex:1"></span><button class="btn btn-sm btn-secondary">Tentar de novo</button></div>
+        </div>`;
+    }
+
+    Proto.states([
+      { id: "padrao", label: "Padrão", render: renderPadrao },
+      { id: "vazio", label: "0 registros", render: renderVazio },
+      { id: "muitos", label: "Muitos + paginação", render: renderMuitos },
+      { id: "sem-resultado", label: "Busca sem resultado", render: renderBuscaSemResultado },
+      { id: "carregando", label: "Carregando", render: renderCarregando },
+      { id: "erro", label: "Erro", render: renderErro },
+    ]);
+  </script>
+</body>
+</html>
