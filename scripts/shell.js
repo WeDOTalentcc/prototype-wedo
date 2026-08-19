@@ -45,7 +45,7 @@
   const MENU = [
     { items: [
       { icon: "messageCircle", label: "Conversar" },
-      { icon: "brain", label: "Conversas", cyanIcon: true },
+      { icon: "brain", label: "Conversas", cyanIcon: true, conversas: true },
     ]},
     { items: [
       { icon: "barChart", label: "Decidir", subs: [
@@ -88,7 +88,7 @@
     const active = it.label === activeNav;
     const badges = (it.beta ? '<span class="sb-badge sb-badge-beta">BETA</span>' : "") +
       (it.draft ? '<span class="sb-badge">DRAFT</span>' : "");
-    const liaAttr = it.lia ? ' data-lia="1"' : "";
+    const liaAttr = it.conversas ? ' data-conversas="1"' : "";
     const subs = [...(it.subs || []), ...(it.subsDyn || [])];
     const chev = subs.length ? `<span class="sb-chev">${ico.chevD(14)}</span>` : "";
     let html = `<a class="sb-item ${active ? "active" : ""}" href="${hrefFor(it.label)}"${liaAttr}>
@@ -152,6 +152,12 @@
     if (tela) main.querySelector(".content").appendChild(tela);
     document.body.classList.add("app");
 
+    // Conversas abre o painel de histórico (IASidebar) em vez de navegar
+    document.querySelectorAll('.sb-item[data-conversas="1"]').forEach((a) => {
+      a.addEventListener("click", (e) => {
+        if (window.Conversas) { e.preventDefault(); window.Conversas.toggle(); }
+      });
+    });
     // Colapso simples (visual)
     document.querySelector(".sb-collapse").addEventListener("click", () => {
       document.body.classList.toggle("sb-collapsed");

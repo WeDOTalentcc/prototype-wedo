@@ -225,6 +225,7 @@
 
   <script src="../../screens.js"></script>
   <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
   <script src="../../scripts/proto.js"></script>
   <script>
     /* ---------- Rail: etapas canônicas (canonical-funnel-stages.ts) ---------- */
@@ -429,6 +430,8 @@
       });
     }
 
+    const tParam = new URL(location.href).searchParams.get("titulo");
+    if (tParam) document.querySelector(".conv-head .nm").textContent = tParam;
     const h = new Date().getHours();
     const per = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
     document.getElementById("saudacao").textContent = per + ", Paulo Moraes. Tudo em dia. Vamos adiantar algo?";

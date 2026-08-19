@@ -50,7 +50,10 @@ busca ⌘K + sino, Conversar/Conversas, Decidir (Indicadores), Recrutar (Vagas, 
 Talentos + bancos), Agentes BETA (Marketplace + agentes), Projetos, Recentes e rodapé
 (avatar, config, idioma, ajuda, progresso de setup). **Não inventar itens de menu**: a
 estrutura muda só quando o produto mudar. Todo item é navegável: com tela no protótipo
-(via `NAV_MAP`) abre a tela; sem tela, abre `telas/_em-construcao.html`.
+(via `NAV_MAP`) abre a tela; sem tela, abre `telas/_em-construcao.html`. "Conversas"
+abre o painel de histórico (`conversas.js`, réplica do IASidebar: busca, filtros,
+arquivadas, grupos Fixadas/Hoje/Ontem/Anteriores, menu por conversa com Fixar/Renomear/
+Nota/Arquivar/Excluir). Deep link de revisão: `?conversas=1` abre o painel.
 
 A **barra flutuante de estados** (proto.js) aparece sozinha ao registrar os estados —
 é ela que permite ao avaliador clicar e ver a tela vazia, cheia, com erro etc.
@@ -66,7 +69,8 @@ prototype-wedo/
 ├── styles/tokens.css    ← design tokens WeDO — única fonte de cor
 ├── styles/base.css      ← componentes canônicos (tabela, botões, badges, modal...)
 ├── scripts/proto.js     ← motor de estados + barra flutuante
-├── scripts/shell.js     ← sidebar + topbar do produto (telas logadas)
+├── scripts/shell.js     ← sidebar do produto (telas logadas)
+├── scripts/conversas.js ← painel "Conversas" (IASidebar) — histórico da LIA
 ├── scripts/mock.js      ← dados fake determinísticos pt-BR
 ├── assets/logos/        ← logos oficiais
 ├── docs/PATTERNS.md     ← matriz de estados obrigatórios por tipo de tela
