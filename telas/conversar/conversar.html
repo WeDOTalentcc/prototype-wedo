@@ -93,6 +93,14 @@
       border: 1px solid var(--border-default); background: none; color: var(--text-primary);
       font-weight: 600; cursor: pointer; font-family: inherit; }
 
+    /* Ações da mensagem da LIA (messageActions) */
+    .m-actions { display: flex; align-items: center; gap: 2px; margin-top: 8px; }
+    .m-actions button { padding: 4px; border: none; background: none; border-radius: 6px;
+      color: var(--text-disabled); cursor: pointer; display: flex; }
+    .m-actions button:hover { background: var(--interactive-hover); color: var(--text-secondary); }
+    .m-actions button.up-on { color: var(--wedo-green); }
+    .m-actions svg { width: 14px; height: 14px; }
+
     /* Erro de envio */
     .m-fail { align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
     .m-fail .m-user { opacity: .55; }
@@ -114,10 +122,10 @@
     .input-foot .tool { padding: 6px; border-radius: 8px; border: none; background: none;
       color: var(--text-disabled); cursor: pointer; display: flex; }
     .input-foot .tool:hover { color: var(--text-secondary); background: var(--interactive-hover); }
-    .input-foot .send { width: 30px; height: 30px; border-radius: 8px; border: none;
-      background: var(--bg-inverse); color: var(--text-inverse); display: flex; align-items: center;
-      justify-content: center; cursor: pointer; }
-    .input-foot .send[disabled] { opacity: .35; cursor: default; }
+    .input-foot .send { padding: 6px; border-radius: 8px; border: none; background: none;
+      color: var(--wedo-cyan-dark); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .input-foot .send:hover:not([disabled]) { background: var(--wedo-cyan-bg); }
+    .input-foot .send[disabled] { color: var(--text-disabled); cursor: default; }
     .input-hint { text-align: center; font-size: 11px; color: var(--text-tertiary); margin-top: 8px; }
   </style>
 </head>
@@ -146,7 +154,10 @@
               <button class="tool" title="Mencionar vaga ou candidato"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></svg></button>
               <button class="tool" title="Sugestões"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></button>
             </div>
-            <button class="send" id="csend" disabled aria-label="Enviar mensagem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+            <div class="grp">
+              <button class="tool" title="Gravar áudio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></button>
+              <button class="send" id="csend" disabled aria-label="Enviar mensagem"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg></button>
+            </div>
           </div>
         </div>
         <p class="input-hint">A LIA pode cometer erros. Confira informações importantes.</p>
@@ -270,6 +281,14 @@
       msgs.insertAdjacentHTML("beforeend", `<div class="m-lia" id="ty">${BRAIN_AV}<div class="tx"><span class="typing-dots"><i></i><i></i><i></i></span></div></div>`);
       scrollEnd();
     }
+    const ACTIONS_BAR = `<div class="m-actions">
+      <button title="Copiar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button>
+      <button title="Inserir no chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+      <button title="Útil" onclick="this.classList.toggle('up-on')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg></button>
+      <button title="Não útil"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg></button>
+      <button title="Gerar novamente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+    </div>`;
+
     function streamLia(texto, extraHtml, done) {
       document.getElementById("ty")?.remove();
       const id = "mm" + Math.floor(performance.now());
@@ -281,7 +300,8 @@
         scrollEnd();
         if (i >= texto.length) {
           clearInterval(iv);
-          if (extraHtml) { document.getElementById(id + "x").innerHTML = extraHtml; scrollEnd(); }
+          document.getElementById(id + "x").innerHTML = (extraHtml || "") + ACTIONS_BAR;
+          scrollEnd();
           if (done) done();
         }
       }, 16);
