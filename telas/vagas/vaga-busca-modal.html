@@ -257,35 +257,49 @@
   }
 
   function barraLote() {
-    const antiga = document.getElementById("bulk");
+    const antiga = document.getElementById("selbar");
     if (antiga) antiga.remove();
+    Busca.fecharMenus();
     if (!S.sel.size) return;
-    const el = document.createElement("div");
-    el.className = "bulk-bar"; el.id = "bulk";
-    el.style.left = "24px";
-    el.innerHTML = `
-      <span class="bulk-count">${ic.check(15)} ${S.sel.size} selecionado${S.sel.size === 1 ? "" : "s"}</span>
-      <button class="bulk-btn bulk-ghost" id="b-limpar">Limpar</button>
-      <span class="bulk-ctx">Vaga <b>${VAGA}</b></span>
-      <span class="spacer"></span>
-      <button class="bulk-btn bulk-ghost">${ic.book(13)} Adicionar à lista</button>
-      <button class="bulk-btn bulk-sec" id="b-salvar">${ic.plus(13)} Salvar na vaga e continuar</button>
-      <button class="bulk-btn bulk-pri" id="b-voltar">Salvar e voltar para a vaga ${ic.arrow(13)}</button>`;
-    document.body.appendChild(el);
-    document.getElementById("b-limpar").addEventListener("click", () => {
-      S.sel.clear();
+    const n = S.sel.size;
+    const box = document.createElement("div");
+    box.id = "selbar";
+    box.innerHTML = Busca.selBarHTML({ n: n, total: S.linhas.length, daVaga: true });
+    const corpo = camadas().querySelector(".fs-body");
+    const tabela = corpo && corpo.querySelector(".table-wrap");
+    if (!corpo || !tabela) return;
+    corpo.insertBefore(box, tabela);
+
+    const liga = (acao, fn) => {
+      const el = box.querySelector(`[data-sel="${acao}"]`);
+      if (el) el.addEventListener("click", fn);
+    };
+    const redesenhar = () => {
       document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
       painelReligar(); barraLote();
-    });
-    document.getElementById("b-salvar").addEventListener("click", () => {
-      const n = S.sel.size;
+    };
+    liga("limpar", () => { S.sel.clear(); redesenhar(); });
+    liga("lista", () => toast("Abre a escolha da lista de destino."));
+    liga("mensagem", () => toast("Abre o envio de mensagem em massa."));
+    liga("wsi", () => toast("Dispara a triagem WSI para os selecionados."));
+    liga("salvar", () => {
       S.sel.forEach((id) => S.salvos.add(id));
-      S.sel.clear();
-      document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
-      painelReligar(); barraLote();
+      S.sel.clear(); redesenhar();
       toast(`<b>${n} candidatos salvos na vaga</b><br>${VAGA} · você continua na busca`);
     });
-    document.getElementById("b-voltar").addEventListener("click", () => Proto.apply("salvando"));
+    liga("variacoes", (ev) => {
+      ev.stopPropagation();
+      Busca.abrirMenu(box.querySelector('[data-sel="variacoes"]'), Busca.menuVariacoes(n), (acao) => {
+        if (acao === "voltar") Proto.apply("salvando");
+        else { S.sel.forEach((id) => S.salvos.add(id)); S.sel.clear(); redesenhar();
+               toast(`<b>${n} candidatos salvos na vaga</b><br>${VAGA} · você continua na busca`); }
+      }, camadas());
+    });
+    liga("mais", (ev) => {
+      ev.stopPropagation();
+      Busca.abrirMenu(box.querySelector('[data-sel="mais"]'), Busca.menuMais(n),
+        () => toast("Ação que já existe no produto, mantida no menu para não lotar a barra."), camadas());
+    });
   }
 
   document.getElementById("btn-abrir").addEventListener("click", () => Proto.apply("modal-manual"));

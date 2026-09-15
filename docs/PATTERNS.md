@@ -136,7 +136,13 @@ a partir de **dentro da vaga** (modal + painel de tela cheia).
 - `.search-card`: caixa de busca (réplica do SmartSearchInput), montada por
   `Busca.caixa()` em `scripts/busca.js`.
 - `.drawer`: painel lateral de edição da busca (critérios, texto original, filtros).
-- `.bulk-bar`: barra de ações em lote, ancorada no rodapé quando há seleção.
+- `.sel-bar` (via `Busca.selBarHTML()`): barra de ações em lote, logo **abaixo da barra
+  da busca**, como no `BulkActionsBar` do produto. Com dez ações possíveis ela satura,
+  então o padrão é: uma ação principal com variação em **split button** (salvar na vaga
+  e continuar / salvar e voltar), as três mais usadas visíveis (Lista, Mensagem, Triagem
+  WSI) e o resto em **Mais ações** (Favoritos, Ocultar, Salvar na Base, Baixar para o
+  banco). O contador e o aviso de seleção parcial ficam dentro dessa barra, junto da
+  ação, e não na barra da busca.
 - `.modal` / `.fs-panel`: diálogo e painel de tela cheia da busca dentro da vaga.
 - `.kanban` + `.bg-task`: funil da vaga e a faixa de processamento em segundo plano
   (o quadro é renderizado uma vez e os cards chegam destacados com `.kb-card.novo`).

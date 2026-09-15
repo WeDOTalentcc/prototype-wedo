@@ -45,6 +45,13 @@
     spark: (s) => I('<path d="m12 3 1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9Z"/>', s),
     mail: (s) => I('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 6L2 7"/>', s),
     phone: (s) => I('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/>', s),
+    lista: (s) => I('<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>', s),
+    prancheta: (s) => I('<rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>', s),
+    estrela: (s) => I('<path d="M11.5 3.2a.6.6 0 0 1 1 0l2.2 4.5 5 .7a.6.6 0 0 1 .3 1l-3.6 3.5.9 5a.6.6 0 0 1-.9.6L12 16.1l-4.4 2.4a.6.6 0 0 1-.9-.6l.9-5-3.6-3.5a.6.6 0 0 1 .3-1l5-.7Z"/>', s),
+    olhoCortado: (s) => I('<path d="M10.7 5.1A9.9 9.9 0 0 1 12 5c6.4 0 10 7 10 7a15 15 0 0 1-2.2 3.1"/><path d="M6.6 6.6A15.3 15.3 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="m2 2 20 20"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>', s),
+    nuvem: (s) => I('<path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.4 15.5A5 5 0 0 1 7 6a7 7 0 0 1 13.3 2.2A4.5 4.5 0 0 1 19.5 17"/>', s),
+    mais: (s) => I('<circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/>', s),
+    alerta: (s) => I('<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
     home: (s) => I('<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', s),
     zap: (s) => I('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>', s),
     filtro: (s) => I('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>', s),
@@ -234,5 +241,78 @@ Requisitos:
       </div>`;
   }
 
-  window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, SUGESTOES, gerar, linhas, caixa };
+
+  /* ---------- barra de ações em lote (BulkActionsBar do produto) ----------
+     O produto já tem 8 ações aqui. Com as duas do salvamento seriam dez
+     botões competindo, então: ação principal com variação (split button),
+     as três mais usadas visíveis e o resto em "Mais ações".                */
+  function selBarHTML(o) {
+    const n = o.n, total = o.total;
+    const principal = o.daVaga
+      ? `<span class="split">
+           <button class="sel-btn principal" data-sel="salvar">${ic.plus(14)} Salvar na vaga e continuar</button>
+           <button class="sel-btn caret" data-sel="variacoes" aria-label="Outras formas de salvar">${ic.chevD(14)}</button>
+         </span>`
+      : `<button class="sel-btn principal" data-sel="escolher" style="border-radius:var(--radius-sm)">${ic.brief(14)} Adicionar à vaga…</button>`;
+    return `
+      <div class="sel-bar">
+        <span class="sel-qtd">
+          <span class="circ">${ic.users(14)}</span>
+          <span class="txt">${n} candidato${n > 1 ? "s" : ""} selecionado${n > 1 ? "s" : ""}</span>
+          <span class="sel-chip">${n} de ${total}</span>
+        </span>
+        <span class="sel-acoes">
+          ${principal}
+          <button class="sel-btn" data-sel="lista">${ic.lista(14)} Lista</button>
+          <button class="sel-btn" data-sel="mensagem">${ic.mail(14)} Mensagem</button>
+          <button class="sel-btn" data-sel="wsi">${ic.prancheta(14)} Triagem WSI</button>
+          <button class="sel-btn" data-sel="mais">${ic.mais(14)} Mais ações</button>
+        </span>
+        <button class="sel-btn sel-fechar" data-sel="limpar" aria-label="Limpar seleção">${ic.x(14)}</button>
+        ${n < total ? `<p class="sel-aviso" style="flex-basis:100%;margin:0">${ic.alerta(12)} A ação vai atingir só os ${n} carregados. Carregue mais para incluir os outros ${total - n}.</p>` : ""}
+      </div>`;
+  }
+
+  function menuVariacoes(n) {
+    return `
+      <button data-acao="voltar">${ic.arrow(14)} <span>Salvar e voltar para a vaga
+        <span class="desc">Envia os ${n} e abre o funil da vaga</span></span></button>
+      <div class="sep"></div>
+      <button data-acao="continuar">${ic.plus(14)} <span>Salvar na vaga e continuar
+        <span class="desc">Mantém você na busca para escolher mais</span></span></button>`;
+  }
+
+  function menuMais(n) {
+    return `
+      <button data-acao="favoritos">${ic.estrela(14)} Favoritos</button>
+      <button data-acao="ocultar">${ic.olhoCortado(14)} Ocultar da busca</button>
+      <div class="sep"></div>
+      <div class="grupo">Trazer para a base do cliente</div>
+      <button data-acao="base">${ic.db(14)} Salvar na Base (${Math.min(n, 3)})</button>
+      <button data-acao="banco">${ic.nuvem(14)} Baixar para o banco (${n})</button>`;
+  }
+
+  /* menu ancorado, usado pelo split e pelo "Mais ações" */
+  function abrirMenu(ancora, html, onEscolha, hospedeiro) {
+    fecharMenus();
+    const host = hospedeiro || document.body;
+    const r = ancora.getBoundingClientRect();
+    const el = document.createElement("div");
+    el.className = "menu-acoes";
+    el.style.top = (r.bottom + window.scrollY + 6) + "px";
+    el.style.left = Math.max(12, r.left + window.scrollX - 120) + "px";
+    el.innerHTML = html;
+    host.appendChild(el);
+    el.querySelectorAll("[data-acao]").forEach((b) =>
+      b.addEventListener("click", () => { const a = b.dataset.acao; fecharMenus(); onEscolha(a); }));
+    setTimeout(() => document.addEventListener("click", fecharAoClicarFora), 0);
+  }
+  function fecharAoClicarFora(ev) { if (!ev.target.closest(".menu-acoes")) fecharMenus(); }
+  function fecharMenus() {
+    document.querySelectorAll(".menu-acoes").forEach((el) => el.remove());
+    document.removeEventListener("click", fecharAoClicarFora);
+  }
+
+  window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, SUGESTOES, gerar, linhas, caixa,
+    selBarHTML, menuVariacoes, menuMais, abrirMenu, fecharMenus };
 })();
