@@ -51,6 +51,44 @@ window.SCREENS = [
       },
     ],
   },
+  {
+    area: "Funil de Talentos",
+    items: [
+      {
+        id: "busca-nova",
+        titulo: "Nova busca de candidatos",
+        arquivo: "telas/funil/busca-nova.html",
+        status: "rascunho",
+        descricao: "Caixa de busca do funil (SmartSearchInput): modos linguagem natural, similar, descrição da vaga, boolean e arquétipos, tags de critérios, fonte e aviso de crédito. Traz a prévia da taxonomia que a LIA extraiu antes de disparar a busca.",
+      },
+      {
+        id: "sourcing-resultados",
+        titulo: "Sourcing: resultados da busca",
+        arquivo: "telas/funil/sourcing-resultados.html",
+        status: "rascunho",
+        descricao: "Resultados da busca com a proposta de taxonomia no cabeçalho, painel único de edição da busca, salvar na vaga sem sair da busca e continuação da mesma busca sem repetir quem já foi visto.",
+      },
+    ],
+  },
+  {
+    area: "Vaga",
+    items: [
+      {
+        id: "vaga-busca-modal",
+        titulo: "Buscar candidatos dentro da vaga",
+        arquivo: "telas/vagas/vaga-busca-modal.html",
+        status: "rascunho",
+        descricao: "Fluxo modal da busca aberta de dentro da vaga: diálogo com contexto da vaga e os dois modos (buscar e selecionar / adicionar automaticamente), painel de tela cheia com progresso e resultados, e o salvamento com os dois caminhos.",
+      },
+      {
+        id: "vaga-kanban",
+        titulo: "Funil da vaga (kanban)",
+        arquivo: "telas/vagas/vaga-kanban.html",
+        status: "rascunho",
+        descricao: "Kanban do funil da vaga. Mostra a proposta de importação em segundo plano: o quadro é renderizado uma única vez e os candidatos salvos na busca chegam destacados, sem recarregar a cada processamento.",
+      },
+    ],
+  },
   /* Adicione novas áreas/telas acima deste comentário, seguindo o shape:
   (e mapeie o label do menu em NAV_MAP abaixo para o link do menu apontar pra tela)
   {
@@ -72,4 +110,5 @@ window.SCREENS = [
 window.NAV_MAP = {
   "Conversar": "conversar",
   "Vagas": "vagas-lista",
+  "Funil de Talentos": "sourcing-resultados",
 };

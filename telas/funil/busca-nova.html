@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  Funil de Talentos > Nova busca (prompt)
+  Réplica do SmartSearchInput do produto: modos de busca, tags
+  de critérios, fonte (banco/global/híbrida) e aviso de crédito.
+  Proposta incluída: prévia da taxonomia que a LIA extraiu ANTES
+  de disparar a busca (é a mesma taxonomia que passa a identificar
+  a busca na tela de resultados).
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nova busca de candidatos — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    .busca-wrap { max-width: 920px; }
+    .sug-row { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; margin-top: var(--space-4); }
+    .sug { border: 1px solid var(--border-subtle); background: var(--bg-primary); border-radius: var(--radius-full);
+      padding: 7px 13px; font-size: 12.5px; color: var(--text-secondary); font-family: inherit; cursor: pointer; text-align: left; }
+    .sug:hover { border-color: var(--border-default); color: var(--text-primary); }
+    .sec-title { font-size: var(--text-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--text-tertiary); margin: var(--space-6) 0 var(--space-3); }
+    .arq-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+    .arq { border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: var(--space-4);
+      background: var(--bg-primary); cursor: pointer; }
+    .arq:hover { border-color: var(--border-default); box-shadow: var(--shadow-sm); }
+    .arq .t { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .arq .d { font-size: var(--text-xs); color: var(--text-tertiary); margin-top: 4px; }
+    .arq .tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: var(--space-3); }
+    .url-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  </style>
+</head>
+<body>
+  <div id="shell" data-nav="Funil de Talentos"></div>
+
+  <div id="tela">
+    <div class="crumbs" style="margin-bottom:var(--space-3)">
+      <a href="../_em-construcao.html?titulo=Início">Início</a>
+      <span class="sep">›</span><a href="sourcing-resultados.html">Funil de Talentos</a>
+      <span class="sep">›</span><b>Nova busca</b>
+    </div>
+
+    <div class="page-head">
+      <h1>Funil de Talentos</h1>
+      <div class="spacer"></div>
+      <button class="btn btn-primary">+ Novo Candidato</button>
+      <button class="btn btn-secondary">Nova Busca</button>
+      <button class="btn btn-secondary">Salvar Busca</button>
+    </div>
+
+    <div class="pill-tabs" role="tablist">
+      <button class="pill-tab active" role="tab">Busca</button>
+      <button class="pill-tab" role="tab">Favoritos</button>
+      <button class="pill-tab" role="tab">Listas</button>
+      <button class="pill-tab" role="tab">Buscas Salvas</button>
+      <button class="pill-tab" role="tab">Histórico</button>
+    </div>
+
+    <div class="busca-wrap" id="conteudo"></div>
+  </div>
+
+  <div class="toast-box" id="toasts"></div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script src="../../scripts/busca.js"></script>
+  <script>
+  const ic = Busca.ic;
+
+  Lia.mount({ roteiro: [
+    { de: "user", texto: "Preciso de um analista financeiro sênior em São Paulo, com CPA-20 e vivência em FP&A" },
+    { de: "lia", texto: "Entendi ✦ Já separei os critérios: cargo Analista Financeiro Sênior, São Paulo, 5+ anos, mercado financeiro e as habilidades Excel avançado, Power BI, SQL e CPA-20.", digitando: 1500 },
+    { de: "lia", texto: "Na base global isso deve trazer cerca de 340 perfis. Quer que eu comece pelos 10 mais aderentes para você avaliar antes de gastar mais créditos?", digitando: 1200 },
+    { de: "user", texto: "Isso, começa com 10" },
+  ]});
+
+  function toast(msg) {
+    const box = document.getElementById("toasts");
+    const t = document.createElement("div");
+    t.className = "toast"; t.innerHTML = msg;
+    box.appendChild(t); setTimeout(() => t.remove(), 3600);
+  }
+
+  function sugestoes() {
+    return `
+      <div class="sug-row">
+        <span class="crit-hint" style="margin:0">${ic.spark(13)} Sugestões</span>
+        <button class="sug">Backend Sênior em São Paulo, 5+ anos em fintechs, Node.js e Python</button>
+        <button class="sug">Product Manager Pleno remoto, B2B SaaS, metodologias ágeis</button>
+      </div>
+      <p class="sec-title">Buscas recentes</p>
+      <div class="sug-row" style="margin-top:0">
+        <button class="sug">${ic.search(12)} Analista financeiro com CPA-20 em São Paulo</button>
+        <button class="sug">${ic.search(12)} Professora de matemática para o ensino médio</button>
+        <button class="sug">${ic.doc(12)} Sobre a vaga: procuramos Analista Financeiro Sênior…</button>
+      </div>`;
+  }
+
+  function montar(html) { document.getElementById("conteudo").innerHTML = html; ligar(); }
+
+  function ligar() {
+    document.querySelectorAll("[data-buscar]").forEach((b) =>
+      b.addEventListener("click", () => {
+        Proto.apply("buscando");
+        toast("Disparando a busca…");
+        setTimeout(() => { location.href = "sourcing-resultados.html"; }, 1200);
+      }));
+    document.querySelectorAll("[data-fonte]").forEach((b) =>
+      b.addEventListener("click", () => {
+        document.querySelectorAll("[data-fonte]").forEach((x) => x.classList.toggle("on", x === b));
+        toast(b.dataset.fonte === "local"
+          ? "Busca no banco de talentos: sem consumo de créditos."
+          : "Fonte alterada. O custo estimado aparece antes de confirmar.");
+      }));
+    document.querySelectorAll("[data-toggle]").forEach((b) =>
+      b.addEventListener("click", () => b.classList.toggle("on")));
+    document.querySelectorAll("[data-modo]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const mapa = { natural: "natural", jd: "jd", similar: "similar", arquetipos: "arquetipos", boolean: "boolean" };
+        const destino = mapa[b.dataset.modo];
+        Proto.apply(destino || "natural");
+      }));
+  }
+
+  Proto.states([
+    { id: "vazio", label: "Prompt em branco", render: () =>
+        montar(Busca.caixa({ modo: "natural", tags: "vazio", fonte: "global" }) + sugestoes()) },
+
+    { id: "natural", label: "Linguagem natural", render: () =>
+        montar(Busca.caixa({
+          modo: "natural", tags: "preenchido", fonte: "global", preview: true,
+          texto: "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, com CPA-20, Excel avançado, Power BI e SQL",
+        }) + sugestoes()) },
+
+    { id: "jd", label: "Descrição da vaga", render: () =>
+        montar(Busca.caixa({
+          modo: "jd", tags: "preenchido", fonte: "global", preview: true, texto: Busca.TEXTO_JD, altura: 230,
+          placeholder: "Cole aqui a descrição completa da vaga",
+        }) + `<p class="sec-title">O que muda com a descrição colada</p>
+        <p style="font-size:var(--text-sm);color:var(--text-secondary);line-height:1.6">
+          O texto inteiro continua guardado na busca, mas quem identifica a busca daqui para a frente
+          é a taxonomia acima. Na tela de resultados aparecem os chips, e o texto fica a um clique em
+          <b>Ver texto original</b>.</p>`) },
+
+    { id: "similar", label: "Perfis similares", render: () =>
+        montar(Busca.caixa({
+          modo: "similar", tags: "preenchido", fonte: "global", semBotao: true,
+          texto: "", placeholder: "Cole o LinkedIn de quem você quer usar como referência",
+        }) + `
+        <p class="sec-title">Perfis de referência</p>
+        <div class="url-list">
+          <div class="token-field">${ic.users(13)} linkedin.com/in/analista-financeiro-referencia ${ic.x(12)}</div>
+          <div class="token-field">${ic.doc(13)} curriculo-referencia.pdf ${ic.x(12)}</div>
+          <button class="btn btn-sm btn-secondary" style="align-self:flex-start">${ic.plus(13)} Adicionar perfil ou currículo</button>
+        </div>
+        <div class="sug-row"><button class="btn btn-primary" data-buscar>${ic.search(14)} Buscar candidatos similares</button></div>`) },
+
+    { id: "arquetipos", label: "Arquétipos", render: () =>
+        montar(Busca.caixa({ modo: "arquetipos", tags: "vazio", fonte: "global", semBotao: true,
+          placeholder: "Escolha um arquétipo salvo ou crie um novo a partir de uma contratação de sucesso" }) + `
+        <p class="sec-title">Arquétipos salvos</p>
+        <div class="arq-grid">
+          <div class="arq"><div class="t">🎯 Analista Financeiro Sênior</div>
+            <div class="d">Criado a partir da contratação de Juliana Martins</div>
+            <div class="tags"><span class="chip">FP&A</span><span class="chip">CPA-20</span><span class="chip">São Paulo</span></div></div>
+          <div class="arq"><div class="t">📊 Controller</div>
+            <div class="d">Usado em 4 buscas nos últimos 90 dias</div>
+            <div class="tags"><span class="chip">Orçamento</span><span class="chip">Power BI</span></div></div>
+          <div class="arq"><div class="t">💼 Business Partner</div>
+            <div class="d">Arquétipo público da conta</div>
+            <div class="tags"><span class="chip">Budget</span><span class="chip">SAP</span></div></div>
+        </div>`) },
+
+    { id: "boolean", label: "Boolean", render: () =>
+        montar(Busca.caixa({
+          modo: "boolean", tags: "vazio", fonte: "global",
+          texto: '("analista financeiro" OR "FP&A") AND ("CPA-20" OR "CPA 20") AND ("São Paulo" OR SP) NOT estagiário',
+          placeholder: "Escreva a expressão booleana",
+        }) + `<p class="sec-title">Dica</p>
+        <p style="font-size:var(--text-sm);color:var(--text-secondary)">
+          No modo Boolean a LIA não extrai critérios: a busca é identificada pela própria expressão,
+          exibida na barra de resultados de forma truncada com <b>Ver texto original</b>.</p>`) },
+
+    { id: "sem-fonte", label: "Sem fonte escolhida", render: () => {
+        montar(Busca.caixa({ modo: "natural", tags: "preenchido", fonte: "nenhuma",
+          texto: "Analista financeiro sênior em São Paulo, 5+ anos, CPA-20" }));
+        document.querySelector(".sc-foot").insertAdjacentHTML("beforeend",
+          `<p class="warn-line" style="width:100%">${ic.alert(13)} Selecione ao menos uma fonte de busca</p>`);
+        document.querySelector("[data-buscar]").setAttribute("disabled", "true"); } },
+
+    { id: "buscando", label: "Buscando", render: () => {
+        montar(Busca.caixa({ modo: "jd", tags: "preenchido", fonte: "global", preview: true, texto: Busca.TEXTO_JD, altura: 150, semBotao: true }));
+        document.getElementById("conteudo").insertAdjacentHTML("beforeend", `
+          <div class="card card-pad" style="margin-top:var(--space-4);text-align:center">
+            <div class="fs-overlay" style="position:static;padding:var(--space-5) 0">
+              <span class="ring"></span>
+              <h4>Procurando candidatos na base global…</h4>
+              <p>Buscas na base global podem levar até 1 minuto. Os resultados aparecem aqui assim que estiverem prontos.</p>
+              <span class="crit-hint">${ic.coin(12)} 10 créditos reservados para esta busca</span>
+            </div>
+          </div>`); } },
+
+    { id: "erro", label: "Erro", render: () => {
+        montar(Busca.caixa({ modo: "natural", tags: "preenchido", fonte: "global",
+          texto: "Analista financeiro sênior em São Paulo, 5+ anos, CPA-20" }));
+        document.getElementById("conteudo").insertAdjacentHTML("beforeend", `
+          <div class="error-banner" style="margin-top:var(--space-4)">⚠ A base global não respondeu agora. Nenhum crédito foi consumido.
+            <span style="flex:1"></span><button class="btn btn-sm btn-secondary">Tentar de novo</button></div>`); } },
+  ]);
+  </script>
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  Funil de Talentos > Sourcing (resultados da busca)
+  Réplica da tela do produto (ai-ui: SearchResultsHeader +
+  CandidatesTableArea) com as propostas de melhoria:
+   1. taxonomia no lugar do texto corrido da busca
+   2. uma porta só para editar a busca (painel lateral)
+   3. salvar na vaga sem perder a busca
+   5. continuar a mesma busca sem repetir quem já foi visto
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sourcing: resultados da busca — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    /* layout específico desta tela */
+    .controls-row { display: flex; align-items: center; gap: var(--space-2); margin-bottom: var(--space-3); }
+    .controls-row .spacer { flex: 1; }
+    .res-count { font-size: var(--text-sm); color: var(--text-tertiary); }
+    .tbl td.c-check, .tbl th.c-check { width: 44px; }
+    .tbl td.c-match, .tbl th.c-match { width: 78px; }
+    .tbl td.c-fonte, .tbl th.c-fonte { width: 68px; }
+    .tbl td.c-cargo { color: var(--text-secondary); font-size: var(--text-sm); }
+    .nome-cell { display: flex; align-items: center; gap: var(--space-2); }
+    .skeleton-row { height: 44px; }
+  </style>
+</head>
+<body>
+  <div id="shell" data-nav="Funil de Talentos"></div>
+
+  <div id="tela">
+    <div class="crumbs" style="margin-bottom:var(--space-3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <a href="../_em-construcao.html?titulo=Início">Início</a>
+      <span class="sep">›</span><a href="../_em-construcao.html?titulo=Funil de Talentos">Funil de Talentos</a>
+      <span class="sep">›</span><b>Sourcing</b>
+    </div>
+    <div class="page-head">
+      <h1>Funil de Talentos</h1>
+      <div class="spacer"></div>
+      <button class="btn btn-primary" id="btn-novo">+ Novo Candidato</button>
+      <button class="btn btn-secondary" id="btn-nova-busca">Nova Busca</button>
+      <button class="btn btn-secondary" id="btn-salvar-busca">Salvar Busca</button>
+    </div>
+
+    <div class="pill-tabs" role="tablist">
+      <button class="pill-tab active" role="tab">Busca</button>
+      <button class="pill-tab" role="tab">Favoritos</button>
+      <button class="pill-tab" role="tab">Listas</button>
+      <button class="pill-tab" role="tab">Buscas Salvas</button>
+      <button class="pill-tab" role="tab">Histórico</button>
+    </div>
+
+    <div id="barra-busca"></div>
+
+    <div class="controls-row">
+      <span class="res-count" id="res-count"></span>
+      <div class="spacer"></div>
+      <button class="btn btn-sm btn-secondary" id="btn-select-all">Selecionar Todos</button>
+      <button class="btn btn-sm btn-secondary" id="btn-filtros">Filtros</button>
+      <button class="btn btn-sm btn-secondary" id="btn-colunas">Colunas <span class="badge badge-gray">13</span></button>
+    </div>
+
+    <div class="table-wrap" id="tabela"></div>
+  </div>
+
+  <div id="camadas"></div>
+  <div class="toast-box" id="toasts"></div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script>
+  /* ---------- ícones (lucide inline, padrão do shell.js) ---------- */
+  const I = (p, s) => `<svg width="${s || 16}" height="${s || 16}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const ic = {
+    back: (s) => I('<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>', s),
+    search: (s) => I('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>', s),
+    brief: (s) => I('<path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect width="20" height="14" x="2" y="6" rx="2"/>', s),
+    pin: (s) => I('<path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>', s),
+    clock: (s) => I('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>', s),
+    build: (s) => I('<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M2 22h20"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/>', s),
+    code: (s) => I('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>', s),
+    doc: (s) => I('<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v5h5"/>', s),
+    sliders: (s) => I('<line x1="4" x2="20" y1="7" y2="7"/><line x1="4" x2="20" y1="13" y2="13"/><line x1="4" x2="20" y1="19" y2="19"/><circle cx="9" cy="7" r="2.4" fill="currentColor" stroke="none"/><circle cx="15" cy="13" r="2.4" fill="currentColor" stroke="none"/><circle cx="8" cy="19" r="2.4" fill="currentColor" stroke="none"/>', s),
+    chevD: (s) => I('<path d="m6 9 6 6 6-6"/>', s),
+    x: (s) => I('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>', s),
+    check: (s) => I('<polyline points="20 6 9 17 4 12"/>', s),
+    plus: (s) => I('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+    globe: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>', s),
+    db: (s) => I('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>', s),
+    book: (s) => I('<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16Z"/>', s),
+    arrow: (s) => I('<path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>', s),
+    coin: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9.5 9.5h5"/><path d="M9.5 14.5h5"/>', s),
+    eye: (s) => I('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>', s),
+    alert: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>', s),
+  };
+
+  /* ---------- LIA contextual da tela ---------- */
+  Lia.mount({ roteiro: [
+    { de: "user", texto: "Achei bons perfis nessa busca, mas preciso de mais gente com CPA-20. Consegue ampliar sem repetir quem já vi?" },
+    { de: "lia", texto: "Consigo ✦ Vou continuar a mesma busca a partir do ponto em que paramos, então os 5 que você já salvou na vaga não entram de novo e você não paga por eles outra vez.", digitando: 1600 },
+    { de: "lia", texto: "Encontrei mais 340 perfis compatíveis na base global. Quer que eu traga os próximos 10, priorizando quem tem CPA-20 e experiência em FP&A?", digitando: 1200 },
+    { de: "user", texto: "Pode trazer" },
+    { de: "lia", texto: "Prontinho. Adicionei 10 perfis novos ao final da lista e deixei sua seleção intacta.", digitando: 1400 },
+  ]});
+
+  /* ---------- dados ---------- */
+  const m = Mock.seed(23);
+  const CARGOS_LINHA = [
+    "FP&A | Financial Planning | Corporate Finance | Financial Modeling | BI",
+    "Finance Executive | FP&A | Financial Manager | Valuation | Securities Analyst",
+    "Equity Research Analyst | Renda Variável | Buy Side",
+    "CPA-20 | BackOffice | Analista de Cadastro | Onboarding | Fundos",
+    "FP&A Manager | Corporate Finance | Financial Analysis | Valuation",
+    "Controller | Planejamento Financeiro | Orçamento | Power BI",
+    "Analista de Investimentos | CPA-20 | Asset Management",
+    "Business Partner Financeiro | Budget | Forecast | SAP",
+    "Tesouraria | Fluxo de Caixa | Hedge | Derivativos",
+    "Consultor Financeiro | CPA-20 | Private Banking",
+    "Analista de Crédito Sênior | Risco | Basileia",
+    "Planejamento Financeiro | M&A | Due Diligence | Excel avançado",
+  ];
+  function gerar(n, offset) {
+    const lista = Array.from({ length: n }, (_, i) => {
+      const c = m.candidato();
+      return {
+        id: "c" + (offset + i),
+        nome: c.nome, iniciais: c.iniciais,
+        cargo: CARGOS_LINHA[(offset + i) % CARGOS_LINHA.length],
+        score: 68 + (c.score % 30), // busca de sourcing devolve match alto (ordenado por relevância)
+        fonte: (offset + i) % 3 === 1 ? "local" : "global",
+      };
+    });
+    // a busca chega ordenada por relevância (match desc), como no produto
+    return lista.sort((a, b) => b.score - a.score);
+  }
+
+  const TEXTO_BUSCA = `Sobre a vaga: procuramos Analista Financeiro Sênior para atuar no time de planejamento financeiro em São Paulo, modelo híbrido, 3 dias no escritório.
+
+Responsabilidades:
+• Atender às demandas de FP&A, construindo e mantendo o modelo de projeção de resultados da companhia;
+• Elaborar o orçamento anual e as revisões trimestrais junto às áreas de negócio;
+• Apoiar o fechamento mensal, analisando desvios de orçado x realizado e propondo planos de ação;
+• Construir relatórios gerenciais e apresentações para o board e para o conselho;
+• Dar suporte a estudos de viabilidade, valuation e projetos de M&A.
+
+Requisitos:
+• Superior completo em Administração, Economia, Engenharia ou Contabilidade;
+• 5+ anos de experiência no mercado financeiro;
+• Domínio de Excel avançado, Power BI e SQL;
+• Certificação CPA-20 será considerada diferencial;
+• Inglês avançado para interação com investidores.`;
+
+  const CRITERIOS = [
+    { k: "cargo", cls: "chip-cargo", ico: "brief", label: "Cargo", valor: "Analista Financeiro Sênior" },
+    { k: "local", cls: "chip-local", ico: "pin", label: "Localização", valor: "São Paulo" },
+    { k: "exp", cls: "chip-exp", ico: "clock", label: "Experiência", valor: "5+ anos" },
+    { k: "setor", cls: "chip-setor", ico: "build", label: "Setor", valor: "Mercado financeiro" },
+    { k: "s1", cls: "chip-skill", ico: "code", label: "Habilidades", valor: "Excel avançado" },
+    { k: "s2", cls: "chip-skill", ico: "code", label: "Habilidades", valor: "Power BI" },
+    { k: "s3", cls: "chip-skill", ico: "code", label: "Habilidades", valor: "SQL" },
+    { k: "s4", cls: "chip-skill", ico: "code", label: "Habilidades", valor: "CPA-20" },
+    { k: "s5", cls: "chip-skill", ico: "code", label: "Habilidades", valor: "Inglês avançado" },
+  ];
+  const CHIPS_VISIVEIS = 4;
+
+  /* ---------- estado da tela ---------- */
+  const S = {
+    modo: "proposta",      // "proposta" | "legacy"
+    linhas: [],
+    sel: new Set(),
+    salvos: new Set(),
+    criterios: CRITERIOS.slice(),
+    omitidos: 0,
+    mostrarOmitidos: false,
+    total: 340,
+    daVaga: true,
+    vaga: "Analista Financeiro Sênior",
+  };
+
+  const $ = (s) => document.querySelector(s);
+  const camadas = () => document.getElementById("camadas");
+
+  function toast(msg) {
+    const box = document.getElementById("toasts");
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.innerHTML = msg;
+    box.appendChild(t);
+    setTimeout(() => t.remove(), 3600);
+  }
+
+  /* ---------- barra da busca ---------- */
+  function barraProposta() {
+    const vis = S.criterios.slice(0, CHIPS_VISIVEIS);
+    const resto = S.criterios.length - vis.length;
+    const chips = vis.map((c) => `
+      <span class="chip-tax ${c.cls}" data-crit="${c.k}" title="${c.label}: ${c.valor}">
+        ${ic[c.ico](12)}${c.valor}
+        <button class="chip-tax rm" data-rm="${c.k}" aria-label="Remover ${c.label}" style="padding:0;background:none">${ic.x(11)}</button>
+      </span>`).join("");
+    return `
+      <div class="query-bar">
+        <button class="icon-btn" id="btn-voltar" aria-label="Voltar para a busca">${ic.back(18)}</button>
+        <span class="qb-ico">${ic.search(16)}</span>
+        <span class="chip-tax chip-modo">${ic.doc(12)} Descrição da vaga</span>
+        <span class="qb-sep"></span>
+        <div class="qb-chips">${chips}</div>
+        ${resto > 0 ? `<button class="chip-tax chip-mais" id="btn-mais-crit">+${resto} ${ic.chevD(11)}</button>` : ""}
+        <span class="qb-sep"></span>
+        <button class="qb-link" id="btn-texto">${ic.doc(13)} Ver texto original</button>
+        <button class="btn btn-sm btn-secondary" id="btn-editar">${ic.sliders(13)} Editar busca <span class="badge badge-gray">4</span></button>
+      </div>`;
+  }
+
+  /* realce inline das entidades: é o que o produto faz hoje dentro do texto corrido */
+  function realcarEntidades(txt) {
+    const marcas = [
+      ["Analista Financeiro Sênior", "chip-cargo", "brief"],
+      ["São Paulo", "chip-local", "pin"],
+      ["5+ anos", "chip-exp", "clock"],
+      ["mercado financeiro", "chip-setor", "build"],
+      ["Excel avançado", "chip-skill", "code"],
+      ["Power BI", "chip-skill", "code"],
+      ["SQL", "chip-skill", "code"],
+      ["CPA-20", "chip-skill", "code"],
+    ];
+    return marcas.reduce((acc, [termo, cls, i]) =>
+      acc.replace(termo, `<span class="chip-tax ${cls}">${ic[i](11)}${termo}</span>`), txt);
+  }
+
+  function barraLegacy() {
+    return `
+      <div class="query-bar legacy">
+        <button class="icon-btn" aria-label="Voltar">${ic.back(18)}</button>
+        <span class="qb-ico" style="margin-top:4px">${ic.search(16)}</span>
+        <div class="qb-text">
+          ${realcarEntidades(TEXTO_BUSCA.replace(/\n+/g, " "))}
+          <button class="icon-btn" title="Editar query" style="vertical-align:middle">${ic.sliders(13)}</button>
+          <button class="qb-link" style="display:inline-flex">Editar Filtros ›</button>
+        </div>
+      </div>`;
+  }
+
+  function renderBarra() {
+    document.getElementById("barra-busca").innerHTML =
+      S.modo === "legacy" ? barraLegacy() : barraProposta();
+    if (S.modo === "legacy") return;
+    const voltarBusca = document.getElementById("btn-voltar");
+    if (voltarBusca) voltarBusca.addEventListener("click", () => { location.href = "busca-nova.html"; });
+    $("#btn-texto").addEventListener("click", abrirTexto);
+    $("#btn-editar").addEventListener("click", () => abrirDrawer("criterios"));
+    const mais = $("#btn-mais-crit");
+    if (mais) mais.addEventListener("click", () => abrirDrawer("criterios"));
+    document.querySelectorAll("[data-crit]").forEach((el) =>
+      el.addEventListener("click", () => abrirDrawer("criterios")));
+    document.querySelectorAll("[data-rm]").forEach((el) =>
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const k = el.dataset.rm;
+        const c = S.criterios.find((x) => x.k === k);
+        S.criterios = S.criterios.filter((x) => x.k !== k);
+        renderBarra();
+        toast(`Critério <b>${c.valor}</b> removido. Clique em Editar busca para refazer a busca.`);
+      }));
+  }
+
+  /* ---------- tabela ---------- */
+  function linhaHTML(c) {
+    const on = S.sel.has(c.id);
+    const salvo = S.salvos.has(c.id);
+    const ring = c.score >= 80 ? "" : c.score >= 65 ? " media" : " baixa";
+    return `<tr class="${salvo ? "row-salvo" : ""}" data-id="${c.id}">
+      <td class="c-check"><button class="check ${on ? "on" : ""}" data-check="${c.id}" role="checkbox" aria-checked="${on}" aria-label="Selecionar ${c.nome}">${ic.check(12)}</button></td>
+      <td class="c-match"><span class="match-ring${ring}">${c.score}</span></td>
+      <td class="c-fonte"><span class="fonte-ico" title="${c.fonte === "global" ? "Busca global" : "Banco de talentos"}">${c.fonte === "global" ? ic.globe(17) : ic.db(17)}</span></td>
+      <td>
+        <div class="nome-cell">
+          <span class="avatar">${c.iniciais}</span>
+          <span class="nm">${c.nome}</span>
+          ${salvo ? `<span class="badge badge-cyan">${ic.check(11)} Na vaga</span>` : ""}
+        </div>
+      </td>
+      <td class="c-cargo">${c.cargo}</td>
+    </tr>`;
+  }
+
+  function renderTabela(opts) {
+    opts = opts || {};
+    const aviso = S.omitidos && !S.mostrarOmitidos
+      ? `<div class="hint-row">${ic.eye(15)} <span><b>${S.omitidos} perfis</b> que você já viu nesta vaga foram omitidos para não gastar créditos de novo.</span>
+           <button class="link" id="btn-mostrar-omitidos">Mostrar mesmo assim</button></div>` : "";
+    const rodape = opts.semRodape ? "" : `
+      <div class="load-more">
+        <button class="btn btn-sm btn-secondary" id="btn-mais">${ic.plus(13)} Buscar mais candidatos</button>
+        <span class="meta" id="meta-mais">${S.linhas.length} de ~${S.total} encontrados${S.salvos.size ? ` · ${S.salvos.size} já na vaga` : ""}</span>
+      </div>`;
+    document.getElementById("tabela").innerHTML = `
+      ${aviso}
+      <table class="tbl">
+        <thead><tr>
+          <th class="c-check"></th><th class="c-match">Match</th><th class="c-fonte">Fonte</th>
+          <th>Candidato</th><th>Cargo atual</th>
+        </tr></thead>
+        <tbody>${S.linhas.map(linhaHTML).join("")}</tbody>
+      </table>
+      ${rodape}`;
+    document.getElementById("res-count").textContent =
+      `${S.linhas.length} candidato${S.linhas.length === 1 ? "" : "s"} nesta busca`;
+
+    document.querySelectorAll("[data-check]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const id = b.dataset.check;
+        S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id);
+        renderTabela(opts); renderBulk();
+      }));
+    const mostrar = document.getElementById("btn-mostrar-omitidos");
+    if (mostrar) mostrar.addEventListener("click", () => {
+      S.mostrarOmitidos = true;
+      S.linhas = S.linhas.concat(gerar(S.omitidos, 900));
+      S.omitidos = 0;
+      renderTabela(opts);
+      toast("Perfis já vistos voltaram para a lista. Eles não geram cobrança nova.");
+    });
+    const mais = document.getElementById("btn-mais");
+    if (mais) mais.addEventListener("click", buscarMais);
+  }
+
+  function buscarMais() {
+    const btn = document.getElementById("btn-mais");
+    btn.disabled = true;
+    btn.innerHTML = "Buscando mais candidatos…";
+    setTimeout(() => {
+      S.linhas = S.linhas.concat(gerar(6, S.linhas.length + 100));
+      renderTabela();
+      toast("6 novos perfis adicionados. Sua seleção foi mantida.");
+    }, 900);
+  }
+
+  /* ---------- barra de ações em lote ---------- */
+  function renderBulk() {
+    const antiga = document.getElementById("bulk");
+    if (antiga) antiga.remove();
+    if (!S.sel.size) return;
+    const el = document.createElement("div");
+    el.className = "bulk-bar";
+    el.id = "bulk";
+    el.innerHTML = `
+      <span class="bulk-count">${ic.check(15)} ${S.sel.size} selecionado${S.sel.size === 1 ? "" : "s"}</span>
+      <button class="bulk-btn bulk-ghost" id="bulk-limpar">Limpar</button>
+      ${S.daVaga ? `<span class="bulk-ctx">Vaga <b>${S.vaga}</b></span>` : ""}
+      <span class="spacer"></span>
+      <button class="bulk-btn bulk-ghost" id="bulk-lista">${ic.book(13)} Adicionar à lista</button>
+      ${S.daVaga
+        ? `<button class="bulk-btn bulk-sec" id="bulk-salvar">${ic.plus(13)} Salvar na vaga e continuar</button>
+           <button class="bulk-btn bulk-pri" id="bulk-voltar">Salvar e voltar para a vaga ${ic.arrow(13)}</button>`
+        : `<button class="bulk-btn bulk-pri" id="bulk-escolher">${ic.plus(13)} Adicionar à vaga…</button>`}`;
+    document.body.appendChild(el);
+    document.getElementById("bulk-limpar").addEventListener("click", () => {
+      S.sel.clear(); renderTabela(); renderBulk();
+    });
+    const salvar = document.getElementById("bulk-salvar");
+    if (salvar) salvar.addEventListener("click", salvarEContinuar);
+    const voltar = document.getElementById("bulk-voltar");
+    if (voltar) voltar.addEventListener("click", () => {
+      const n = S.sel.size;
+      salvarEContinuar(true);
+      toast(`Abrindo a vaga <b>${S.vaga}</b> com ${n} candidatos em processamento…`);
+      setTimeout(() => { location.href = "../vagas/vaga-kanban.html?estado=importando"; }, 900);
+    });
+    const lista = document.getElementById("bulk-lista");
+    if (lista) lista.addEventListener("click", () => toast("Selecione a lista de destino (fluxo já existente no produto)."));
+    const escolher = document.getElementById("bulk-escolher");
+    if (escolher) escolher.addEventListener("click", () => toast("Abre o seletor de vagas (busca fora do contexto de uma vaga)."));
+  }
+
+  function salvarEContinuar(silencioso) {
+    const n = S.sel.size;
+    S.sel.forEach((id) => S.salvos.add(id));
+    S.sel.clear();
+    renderTabela(); renderBulk();
+    if (!silencioso) {
+      toast(`<b>${n} candidatos salvos na vaga</b><br>${S.vaga} · você continua na busca`);
+    }
+  }
+
+  /* ---------- popover do texto original ---------- */
+  function abrirTexto() {
+    fecharCamadas();
+    const anchor = document.getElementById("btn-texto").getBoundingClientRect();
+    const el = document.createElement("div");
+    el.className = "popover";
+    el.style.top = (anchor.bottom + window.scrollY + 8) + "px";
+    el.style.left = Math.max(24, anchor.right - 620) + "px";
+    el.style.position = "absolute";
+    el.innerHTML = `
+      <h4>Texto usado na busca</h4>
+      <div class="pv-txt">${TEXTO_BUSCA}</div>
+      <div class="pv-foot">
+        <span>${TEXTO_BUSCA.length} caracteres · ${CRITERIOS.length} critérios reconhecidos pela LIA</span>
+        <button class="btn btn-sm btn-secondary" id="pv-editar">${ic.sliders(13)} Editar busca</button>
+      </div>`;
+    camadas().appendChild(el);
+    document.getElementById("pv-editar").addEventListener("click", () => abrirDrawer("texto"));
+    setTimeout(() => document.addEventListener("click", fecharAoClicarFora), 0);
+  }
+  function fecharAoClicarFora(ev) {
+    if (ev.target.closest(".popover") || ev.target.closest("#btn-texto")) return;
+    fecharCamadas();
+  }
+
+  /* ---------- painel lateral: editar busca ---------- */
+  function abrirDrawer(aba) {
+    fecharCamadas();
+    const scrim = document.createElement("div");
+    scrim.className = "drawer-scrim";
+    scrim.addEventListener("click", fecharCamadas);
+    const el = document.createElement("aside");
+    el.className = "drawer";
+    el.setAttribute("role", "dialog");
+    el.setAttribute("aria-label", "Editar busca");
+    el.innerHTML = `
+      <div class="drawer-head">
+        <h3>Editar busca</h3>
+        <p>Busca #1387 · fonte Global (Pearch) + Banco de talentos</p>
+      </div>
+      <div class="drawer-tabs">
+        <button class="drawer-tab ${aba === "criterios" ? "active" : ""}" data-aba="criterios">Critérios</button>
+        <button class="drawer-tab ${aba === "texto" ? "active" : ""}" data-aba="texto">Texto original</button>
+        <button class="drawer-tab ${aba === "filtros" ? "active" : ""}" data-aba="filtros">Filtros avançados <span class="badge badge-gray">4</span></button>
+      </div>
+      <div class="drawer-body" id="drawer-body"></div>
+      <div class="drawer-foot">
+        <span class="res-count">${ic.coin(14)} Nova busca global: ~10 créditos</span>
+        <span style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-ghost" id="dw-cancelar">Cancelar</button>
+          <button class="btn btn-sm btn-primary" id="dw-buscar">${ic.search(13)} Buscar novamente</button>
+        </span>
+      </div>`;
+    camadas().appendChild(scrim);
+    camadas().appendChild(el);
+    corpoDrawer(aba);
+    el.querySelectorAll("[data-aba]").forEach((b) =>
+      b.addEventListener("click", () => {
+        el.querySelectorAll("[data-aba]").forEach((x) => x.classList.toggle("active", x === b));
+        corpoDrawer(b.dataset.aba);
+      }));
+    document.getElementById("dw-cancelar").addEventListener("click", fecharCamadas);
+    document.getElementById("dw-buscar").addEventListener("click", () => {
+      fecharCamadas();
+      toast("Busca refeita com os critérios ajustados. Sua seleção foi mantida.");
+    });
+  }
+
+  function corpoDrawer(aba) {
+    const body = document.getElementById("drawer-body");
+    if (aba === "texto") {
+      body.innerHTML = `
+        <div class="field">
+          <label>Texto da busca (descrição da vaga)</label>
+          <textarea class="input" style="min-height:320px;line-height:1.6">${TEXTO_BUSCA}</textarea>
+          <span class="hint">A LIA relê o texto e atualiza os critérios automaticamente ao salvar.</span>
+        </div>`;
+      return;
+    }
+    if (aba === "filtros") {
+      body.innerHTML = `
+        <div class="field"><label>Fonte da busca</label>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-secondary">${ic.db(13)} Banco</button>
+            <button class="btn btn-sm btn-primary">${ic.globe(13)} Global</button>
+            <button class="btn btn-sm btn-secondary">Híbrida</button>
+          </div></div>
+        <div class="field"><label>Idiomas</label><div class="token-field"><span class="chip">Inglês avançado</span><button class="token-add">+ adicionar</button></div></div>
+        <div class="field"><label>Formação</label><div class="token-field"><span class="chip">Superior completo</span><button class="token-add">+ adicionar</button></div></div>
+        <div class="field"><label>Empresas excluídas</label><div class="token-field"><span class="chip">Concorrente A</span><span class="chip">Concorrente B</span><button class="token-add">+ adicionar</button></div></div>
+        <div class="field"><label>Contato obrigatório</label>
+          <div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary">E-mail</button><button class="btn btn-sm btn-secondary">Telefone</button></div>
+          <span class="hint">Exigir contato aumenta o custo por candidato na busca global.</span></div>`;
+      return;
+    }
+    const campos = [
+      { label: "Cargo", ico: "brief", vals: ["Analista Financeiro Sênior"] },
+      { label: "Localização", ico: "pin", vals: ["São Paulo"] },
+      { label: "Experiência", ico: "clock", vals: ["5+ anos"] },
+      { label: "Setor", ico: "build", vals: ["Mercado financeiro"] },
+      { label: "Habilidades", ico: "code", vals: ["Excel avançado", "Power BI", "SQL", "CPA-20", "Inglês avançado"] },
+    ];
+    body.innerHTML = campos.map((c) => `
+      <div class="field">
+        <label>${c.label}</label>
+        <div class="token-field">
+          ${c.vals.map((v) => `<span class="chip">${ic[c.ico](12)} ${v} ${ic.x(11)}</span>`).join("")}
+          <button class="token-add">+ adicionar</button>
+        </div>
+      </div>`).join("");
+  }
+
+  function fecharCamadas() {
+    camadas().innerHTML = "";
+    document.removeEventListener("click", fecharAoClicarFora);
+  }
+
+  /* ---------- ações do cabeçalho ---------- */
+  document.getElementById("btn-select-all").addEventListener("click", () => {
+    if (S.sel.size === S.linhas.length) S.sel.clear();
+    else S.linhas.forEach((c) => S.sel.add(c.id));
+    renderTabela(); renderBulk();
+  });
+  document.getElementById("btn-filtros").addEventListener("click", () => abrirDrawer("filtros"));
+  document.getElementById("btn-colunas").addEventListener("click", () => toast("Abre o painel de colunas (13 colunas disponíveis)."));
+  document.getElementById("btn-nova-busca").addEventListener("click", () => { location.href = "busca-nova.html"; });
+  document.getElementById("btn-salvar-busca").addEventListener("click", () => toast("Busca salva em <b>Buscas Salvas</b>."));
+  document.getElementById("btn-novo").addEventListener("click", () => toast("Abre o cadastro manual de candidato."));
+
+  /* ---------- estados ---------- */
+  function base(n) {
+    S.modo = "proposta"; S.criterios = CRITERIOS.slice();
+    S.sel = new Set(); S.salvos = new Set();
+    S.omitidos = 0; S.mostrarOmitidos = false; S.daVaga = true;
+    S.linhas = gerar(n, 0);
+    fecharCamadas();
+  }
+  function pintar(opts) { renderBarra(); renderTabela(opts); renderBulk(); }
+
+  Proto.states([
+    { id: "padrao", label: "Padrão (taxonomia)", render: () => { base(10); pintar(); } },
+    { id: "selecao", label: "5 selecionados", render: () => {
+        base(10); S.linhas.slice(0, 5).forEach((c) => S.sel.add(c.id)); pintar(); } },
+    { id: "salvos", label: "Depois de salvar", render: () => {
+        base(10); S.linhas.slice(0, 5).forEach((c) => S.salvos.add(c.id)); pintar();
+        toast("<b>5 candidatos salvos na vaga</b><br>Analista Financeiro Sênior · você continua na busca"); } },
+    { id: "ja-vistos", label: "Já vistos omitidos", render: () => {
+        base(10); S.omitidos = 12; S.linhas.slice(0, 3).forEach((c) => S.salvos.add(c.id)); pintar(); } },
+    { id: "hoje", label: "Como está hoje", render: () => { base(5); S.modo = "legacy"; pintar({ semRodape: true }); } },
+    { id: "muitos", label: "Muitos + carregar mais", render: () => { base(40); pintar(); } },
+    { id: "vazio", label: "0 registros", render: () => {
+        base(0); renderBarra(); renderBulk();
+        document.getElementById("res-count").textContent = "Nenhum candidato";
+        document.getElementById("tabela").innerHTML = `
+          <div class="empty-state">
+            <div class="ico">⌕</div>
+            <h3>Nenhum candidato encontrado para estes critérios</h3>
+            <p>Remova algum critério da busca ou amplie a fonte para incluir a base global.</p>
+            <button class="btn btn-secondary" style="margin-right:8px" onclick="document.getElementById('btn-editar').click()">Editar busca</button>
+            <button class="btn btn-ai">✦ Pedir sugestão para a LIA</button>
+          </div>`; } },
+    { id: "carregando", label: "Carregando", render: () => {
+        base(0); renderBarra(); renderBulk();
+        document.getElementById("res-count").textContent = "Buscando candidatos…";
+        document.getElementById("tabela").innerHTML =
+          `<div style="padding:var(--space-4);display:flex;flex-direction:column;gap:10px">` +
+          Array(8).fill('<div class="skeleton skeleton-row"></div>').join("") + `</div>`; } },
+    { id: "erro", label: "Erro", render: () => {
+        base(0); renderBarra(); renderBulk();
+        document.getElementById("res-count").textContent = "";
+        document.getElementById("tabela").innerHTML = `
+          <div style="padding:var(--space-5)">
+            <div class="error-banner">⚠ Não foi possível concluir a busca global agora. Nenhum crédito foi consumido.
+              <span style="flex:1"></span><button class="btn btn-sm btn-secondary">Tentar de novo</button></div>
+          </div>`; } },
+  ]);
+  </script>
+</body>
+</html>

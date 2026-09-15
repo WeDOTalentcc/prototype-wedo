@@ -89,3 +89,54 @@ Golden example: `telas/acesso/login.html`.
 `.page-actions`.
 
 Faltou componente? Adicionar no `base.css` com nome genérico e registrar aqui.
+
+---
+
+## 8. Busca de candidatos (sourcing)
+
+Padrão usado por `telas/funil/busca-nova.html`, `telas/funil/sourcing-resultados.html`
+e `telas/vagas/vaga-busca-modal.html`. A busca existe em dois contextos e eles
+compartilham os mesmos componentes: a partir do **Funil de Talentos** (tela cheia) e
+a partir de **dentro da vaga** (modal + painel de tela cheia).
+
+### Estados do prompt de busca
+
+| id | label |
+|---|---|
+| `vazio` | Prompt em branco, tags de critério ainda não reconhecidas |
+| `natural` / `jd` / `similar` / `arquetipos` / `boolean` | Um por modo de busca do produto |
+| `sem-fonte` | Nenhuma fonte marcada: primário desabilitado + aviso |
+| `buscando` | Progresso, com o aviso de créditos reservados |
+| `erro` | Falha da fonte global, deixando claro que não houve consumo |
+
+### Estados dos resultados
+
+| id | label |
+|---|---|
+| `padrao` | Resultados com a taxonomia no cabeçalho |
+| `selecao` | Com candidatos marcados (barra de ações em lote visível) |
+| `salvos` | Depois de salvar na vaga: selo "Na vaga" e seleção zerada |
+| `ja-vistos` | Aviso de perfis omitidos por já terem sido vistos na vaga |
+| `hoje` | Como a tela está hoje (comparação para a proposta) |
+| `muitos`, `vazio`, `carregando`, `erro` | Como no padrão de tabela |
+
+### Componentes (todos no `base.css`, nunca duplicar por tela)
+
+- `.pill-tabs` / `.pill-tab`: abas em pílula do Funil de Talentos.
+- `.query-bar` + `.chip-tax`: barra da busca ativa com a taxonomia. A cor do chip
+  identifica o critério: cargo neutro, localização roxo, experiência laranja,
+  setor ciano, habilidades verde. É a única exceção à regra "ciano só para IA":
+  esses chips são exatamente o que a LIA extraiu do texto.
+- `.search-card`: caixa de busca (réplica do SmartSearchInput), montada por
+  `Busca.caixa()` em `scripts/busca.js`.
+- `.drawer`: painel lateral de edição da busca (critérios, texto original, filtros).
+- `.bulk-bar`: barra de ações em lote, ancorada no rodapé quando há seleção.
+- `.modal` / `.fs-panel`: diálogo e painel de tela cheia da busca dentro da vaga.
+- `.kanban` + `.bg-task`: funil da vaga e a faixa de processamento em segundo plano
+  (o quadro é renderizado uma vez e os cards chegam destacados com `.kb-card.novo`).
+
+### Script compartilhado
+
+`scripts/busca.js` expõe `Busca.ic` (ícones), `Busca.caixa()`, `Busca.linhas()`,
+`Busca.gerar()`, `Busca.CRITERIOS` e `Busca.TEXTO_JD`. Toda tela nova de busca deve
+consumir daí em vez de recriar ícones, dados ou a caixa de busca.

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  Vagas > Vaga > Funil (kanban)
+  Cobre a proposta do item 4: ao voltar de uma busca com
+  candidatos salvos, o kanban é renderizado UMA vez e os
+  candidatos chegam em segundo plano, destacados, sem recarregar
+  a tela a cada processamento (mesmo padrão da importação do Decidir).
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Funil da vaga (kanban) — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    .vaga-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .vaga-head h1 { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.3px; }
+    .vaga-meta { font-size: var(--text-sm); color: var(--text-tertiary); }
+    .vaga-tabs { margin-bottom: var(--space-4); }
+  </style>
+</head>
+<body>
+  <div id="shell" data-nav="Vagas"></div>
+
+  <div id="tela">
+    <div class="crumbs" style="margin-bottom:var(--space-3)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+      <a href="../_em-construcao.html?titulo=Início">Início</a>
+      <span class="sep">›</span><a href="lista-de-vagas.html">Vagas</a>
+      <span class="sep">›</span><b>Analista Financeiro Sênior</b>
+    </div>
+
+    <div class="vaga-head">
+      <h1>Analista Financeiro Sênior</h1>
+      <span class="badge badge-green">Ativa</span>
+      <span class="vaga-meta">Financeiro · São Paulo, SP · 2 posições</span>
+      <div class="spacer" style="flex:1"></div>
+      <button class="btn btn-secondary" id="btn-buscar">Buscar candidatos</button>
+      <button class="btn btn-primary">Ações da vaga</button>
+    </div>
+
+    <div class="pill-tabs vaga-tabs" role="tablist">
+      <button class="pill-tab" role="tab">Resumo</button>
+      <button class="pill-tab active" role="tab">Funil</button>
+      <button class="pill-tab" role="tab">Candidatos</button>
+      <button class="pill-tab" role="tab">Entrevistas</button>
+      <button class="pill-tab" role="tab">Configurações</button>
+    </div>
+
+    <div id="faixa"></div>
+    <div id="board"></div>
+  </div>
+
+  <div class="toast-box" id="toasts"></div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script>
+  const I = (p, s) => `<svg width="${s || 16}" height="${s || 16}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const ic = {
+    check: (s) => I('<polyline points="20 6 9 17 4 12"/>', s),
+    globe: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/>', s),
+    db: (s) => I('<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/>', s),
+    star: (s) => I('<path d="M11.5 3.2a.6.6 0 0 1 1 0l2.2 4.5 5 .7a.6.6 0 0 1 .3 1l-3.6 3.5.9 5a.6.6 0 0 1-.9.6L12 16.1l-4.4 2.4a.6.6 0 0 1-.9-.6l.9-5-3.6-3.5a.6.6 0 0 1 .3-1l5-.7Z"/>', s),
+    plus: (s) => I('<path d="M5 12h14"/><path d="M12 5v14"/>', s),
+  };
+
+  Lia.mount({ roteiro: [
+    { de: "user", texto: "Acabei de salvar 5 candidatos da busca nesta vaga. Já posso acionar?" },
+    { de: "lia", texto: "Estou trazendo os 5 para a coluna Triagem agora ✦ Eles aparecem destacados assim que cada perfil termina de ser processado, sem recarregar o funil.", digitando: 1500 },
+    { de: "lia", texto: "Assim que terminar, posso disparar a triagem por WhatsApp para os 5 de uma vez. Quer que eu prepare?", digitando: 1200 },
+  ]});
+
+  const m = Mock.seed(31);
+  const COLUNAS = ["Triagem", "Entrevista LIA", "Entrevista Gestor", "Proposta", "Contratado"];
+  const NOVOS_NOMES = ["Diego Santana", "Juliana Martins", "Vinícius Farias", "André Gonçalves", "Marcelo Freitas"];
+
+  function cand(novo) {
+    const c = m.candidato();
+    return { nome: c.nome, iniciais: c.iniciais, cargo: c.cargo, score: 68 + (c.score % 30),
+      fonte: c.score % 2 ? "global" : "local", novo: !!novo };
+  }
+  function iniciais(nome) { const p = nome.split(" "); return (p[0][0] + p[p.length - 1][0]).toUpperCase(); }
+
+  function cardHTML(c) {
+    return `<div class="kb-card ${c.novo ? "novo" : ""}">
+      <div class="top">
+        <span class="avatar">${c.iniciais}</span>
+        <span class="nm">${c.nome}</span>
+        <span class="match-ring" style="width:28px;height:28px;font-size:11px">${c.score}</span>
+      </div>
+      <div class="sub">${c.cargo}</div>
+      <div class="foot">
+        <span class="chip">${c.fonte === "global" ? ic.globe(11) : ic.db(11)} ${c.fonte === "global" ? "Busca global" : "Banco"}</span>
+        ${c.novo ? `<span class="badge badge-cyan">${ic.plus(10)} Novo</span>` : ""}
+      </div>
+    </div>`;
+  }
+
+  function board(cols, opts) {
+    opts = opts || {};
+    document.getElementById("board").innerHTML = `<div class="kanban">` + COLUNAS.map((nome, i) => `
+      <div class="kb-col" data-col="${i}">
+        <div class="kb-col-head"><span class="t">${nome}</span><span class="n">${(cols[i] || []).length}</span></div>
+        <div class="kb-cards" id="col-${i}">
+          ${(cols[i] || []).map(cardHTML).join("") || (opts.vazio ? `<p class="vaga-meta" style="padding:var(--space-3);text-align:center">Nenhum candidato</p>` : "")}
+        </div>
+      </div>`).join("") + `</div>`;
+  }
+
+  function faixa(html) { document.getElementById("faixa").innerHTML = html || ""; }
+
+  function toast(msg) {
+    const box = document.getElementById("toasts");
+    const t = document.createElement("div");
+    t.className = "toast"; t.innerHTML = msg;
+    box.appendChild(t); setTimeout(() => t.remove(), 3600);
+  }
+
+  /* dados base do funil */
+  function colunasBase() {
+    return [
+      Array.from({ length: 4 }, () => cand()),
+      Array.from({ length: 3 }, () => cand()),
+      Array.from({ length: 2 }, () => cand()),
+      [cand()],
+      [],
+    ];
+  }
+
+  /* ---------- a proposta do item 4 em movimento ----------
+     O board é montado UMA vez. A importação roda em segundo plano
+     e cada candidato pronto é inserido na coluna Triagem, destacado. */
+  function importar(total, onFim) {
+    let feitos = 0;
+    faixa(`<div class="bg-task">
+      <span class="spin"></span>
+      <span>Trazendo <b>${total} candidatos</b> da busca para o funil…</span>
+      <span class="spacer"></span>
+      <span class="progress"><i style="width:0%"></i></span>
+      <span class="vaga-meta" id="prog-lbl">0 de ${total}</span>
+    </div>`);
+    const tick = () => {
+      const c = cand(true);
+      c.nome = NOVOS_NOMES[feitos] || c.nome;
+      c.iniciais = iniciais(c.nome);
+      const col = document.getElementById("col-0");
+      col.insertAdjacentHTML("afterbegin", cardHTML(c));
+      const head = document.querySelector('.kb-col[data-col="0"] .n');
+      head.textContent = String(+head.textContent + 1);
+      feitos++;
+      const barra = document.querySelector(".progress i");
+      if (barra) barra.style.width = Math.round((feitos / total) * 100) + "%";
+      const lbl = document.getElementById("prog-lbl");
+      if (lbl) lbl.textContent = `${feitos} de ${total}`;
+      if (feitos < total) setTimeout(tick, 700);
+      else setTimeout(() => { if (onFim) onFim(total); }, 500);
+    };
+    setTimeout(tick, 700);
+  }
+
+  function fimImportacao(total) {
+    faixa(`<div class="bg-task" style="background:var(--wedo-green-bg);border-color:var(--wedo-green)">
+      ${ic.check(15)}
+      <span><b>${total} candidatos adicionados</b> à etapa Triagem e destacados no funil.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-sm btn-secondary" id="btn-limpar-destaque">Entendi, limpar destaque</button>
+    </div>`);
+    document.getElementById("btn-limpar-destaque").addEventListener("click", () => {
+      document.querySelectorAll(".kb-card.novo").forEach((el) => el.classList.remove("novo"));
+      document.querySelectorAll(".kb-card .badge-cyan").forEach((el) => el.remove());
+      faixa("");
+    });
+    toast("Funil atualizado sem recarregar a página.");
+  }
+
+  document.getElementById("btn-buscar").addEventListener("click", () => {
+    location.href = "vaga-busca-modal.html";
+  });
+
+  /* ---------- estados ---------- */
+  Proto.states([
+    { id: "padrao", label: "Padrão", render: () => { faixa(""); board(colunasBase()); } },
+    { id: "importando", label: "Importando (2º plano)", render: () => {
+        const cols = colunasBase(); board(cols); importar(5, fimImportacao); } },
+    { id: "importados", label: "Recém-importados", render: () => {
+        const cols = colunasBase();
+        cols[0] = NOVOS_NOMES.map((n) => { const c = cand(true); c.nome = n; c.iniciais = iniciais(n); return c; }).concat(cols[0]);
+        board(cols); fimImportacao(5); } },
+    { id: "coluna-cheia", label: "Coluna cheia", render: () => {
+        const cols = colunasBase();
+        cols[0] = Array.from({ length: 22 }, () => cand());
+        faixa(""); board(cols); } },
+    { id: "vazio", label: "Funil vazio", render: () => {
+        faixa(""); board([[], [], [], [], []], { vazio: true });
+        document.getElementById("board").insertAdjacentHTML("beforeend", `
+          <div class="empty-state" style="margin-top:var(--space-4)">
+            <div class="ico">👥</div>
+            <h3>Nenhum candidato neste funil ainda</h3>
+            <p>Busque candidatos no Funil de Talentos e salve-os nesta vaga, ou ative um agente de sourcing.</p>
+            <button class="btn btn-primary" onclick="location.href='vaga-busca-modal.html'">Buscar candidatos</button>
+          </div>`); } },
+    { id: "arrastando", label: "Card arrastando", render: () => {
+        const cols = colunasBase(); faixa(""); board(cols);
+        const alvo = document.querySelector('#col-0 .kb-card');
+        if (alvo) alvo.classList.add("dragging");
+        document.querySelector('.kb-col[data-col="1"] .kb-cards')
+          .insertAdjacentHTML("afterbegin", `<div class="kb-card" style="border-style:dashed;background:var(--bg-tertiary);height:62px"></div>`); } },
+    { id: "carregando", label: "Carregando", render: () => {
+        faixa("");
+        document.getElementById("board").innerHTML = `<div class="kanban">` + COLUNAS.map((nome) => `
+          <div class="kb-col"><div class="kb-col-head"><span class="t">${nome}</span></div>
+            <div class="kb-cards">${Array(3).fill('<div class="skeleton kb-skeleton"></div>').join("")}</div></div>`).join("") + `</div>`; } },
+    { id: "erro", label: "Erro", render: () => {
+        faixa("");
+        document.getElementById("board").innerHTML = `
+          <div class="error-banner">⚠ Não foi possível carregar o funil desta vaga.
+            <span style="flex:1"></span><button class="btn btn-sm btn-secondary">Tentar de novo</button></div>`; } },
+  ]);
+  </script>
+</body>
+</html>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<!-- =========================================================
+  Vagas > Vaga > Buscar candidatos (fluxo modal)
+  Réplica do fluxo do produto quando a busca nasce DENTRO da vaga:
+  CandidateSearchDialog (modal) -> CandidateSearchResultsModal
+  (painel de tela cheia com progresso) -> AddSourcedToJobDialog.
+  Inclui as propostas: taxonomia no topo dos resultados e os dois
+  caminhos de salvamento (continuar na busca / voltar para a vaga).
+========================================================= -->
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buscar candidatos dentro da vaga — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    .vaga-head { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+    .vaga-head h1 { font-size: var(--text-xl); font-weight: 700; letter-spacing: -0.3px; }
+    .vaga-meta { font-size: var(--text-sm); color: var(--text-tertiary); }
+    .tbl td.c-check, .tbl th.c-check { width: 44px; }
+    .tbl td.c-match, .tbl th.c-match { width: 78px; }
+    .tbl td.c-fonte, .tbl th.c-fonte { width: 68px; }
+    .tbl td.c-cargo { color: var(--text-secondary); font-size: var(--text-sm); }
+    .nome-cell { display: flex; align-items: center; gap: var(--space-2); }
+    .conf-card { text-align: center; padding: var(--space-6) var(--space-5); }
+    .conf-card .circ { width: 52px; height: 52px; border-radius: 50%; background: var(--wedo-green-bg);
+      color: var(--wedo-green); display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-3); }
+  </style>
+</head>
+<body>
+  <div id="shell" data-nav="Vagas"></div>
+
+  <div id="tela">
+    <div class="crumbs" style="margin-bottom:var(--space-3)">
+      <a href="../_em-construcao.html?titulo=Início">Início</a>
+      <span class="sep">›</span><a href="lista-de-vagas.html">Vagas</a>
+      <span class="sep">›</span><b>Analista Financeiro Sênior</b>
+    </div>
+
+    <div class="vaga-head">
+      <h1>Analista Financeiro Sênior</h1>
+      <span class="badge badge-green">Ativa</span>
+      <span class="vaga-meta">Financeiro · São Paulo, SP · 2 posições</span>
+      <div style="flex:1"></div>
+      <button class="btn btn-secondary" id="btn-abrir">Buscar candidatos</button>
+      <button class="btn btn-primary">Ações da vaga</button>
+    </div>
+
+    <div class="pill-tabs" role="tablist">
+      <button class="pill-tab" role="tab">Resumo</button>
+      <button class="pill-tab active" role="tab">Funil</button>
+      <button class="pill-tab" role="tab">Candidatos</button>
+      <button class="pill-tab" role="tab">Entrevistas</button>
+      <button class="pill-tab" role="tab">Configurações</button>
+    </div>
+
+    <div id="board"></div>
+  </div>
+
+  <div id="camadas"></div>
+  <div class="toast-box" id="toasts"></div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script src="../../scripts/busca.js"></script>
+  <script>
+  const ic = Busca.ic;
+  const VAGA = "Analista Financeiro Sênior";
+
+  Lia.mount({ roteiro: [
+    { de: "user", texto: "Busca candidatos para esta vaga, mas quero escolher quem entra no funil" },
+    { de: "lia", texto: "Combinado ✦ Abri a busca já com o contexto da vaga: cargo, localização, senioridade e as habilidades da descrição. É só confirmar a fonte.", digitando: 1500 },
+    { de: "lia", texto: "No modo Buscar e selecionar eu trago os perfis e você marca quem vai para o funil. Se preferir, o modo automático adiciona por score sem você precisar revisar um a um.", digitando: 1300 },
+  ]});
+
+  const m = Mock.seed(31);
+  const COLUNAS = ["Triagem", "Entrevista LIA", "Entrevista Gestor", "Proposta", "Contratado"];
+  const camadas = () => document.getElementById("camadas");
+
+  function toast(msg) {
+    const box = document.getElementById("toasts");
+    const t = document.createElement("div");
+    t.className = "toast"; t.innerHTML = msg;
+    box.appendChild(t); setTimeout(() => t.remove(), 3600);
+  }
+
+  /* ---------- fundo: funil da vaga ---------- */
+  function cardFundo() {
+    const c = m.candidato();
+    return `<div class="kb-card">
+      <div class="top"><span class="avatar">${c.iniciais}</span><span class="nm">${c.nome}</span>
+        <span class="match-ring" style="width:28px;height:28px;font-size:11px">${68 + (c.score % 30)}</span></div>
+      <div class="sub">${Busca.CARGOS_LINHA[c.score % Busca.CARGOS_LINHA.length].split(" | ")[0]}</div>
+    </div>`;
+  }
+  function board() {
+    const qtds = [4, 3, 2, 1, 0];
+    document.getElementById("board").innerHTML = `<div class="kanban">` + COLUNAS.map((nome, i) => `
+      <div class="kb-col"><div class="kb-col-head"><span class="t">${nome}</span><span class="n">${qtds[i]}</span></div>
+        <div class="kb-cards">${Array.from({ length: qtds[i] }, cardFundo).join("")}</div></div>`).join("") + `</div>`;
+  }
+
+  /* ---------- modal: buscar candidatos ---------- */
+  function modal(opts) {
+    opts = opts || {};
+    const auto = opts.modo === "auto";
+    camadas().innerHTML = `
+      <div class="modal-scrim" data-fechar></div>
+      <div class="modal" role="dialog" aria-label="Buscar candidatos">
+        <button class="icon-btn modal-close" data-fechar aria-label="Fechar">${ic.x(16)}</button>
+        <div class="modal-head">
+          <h3>${ic.search(15)} Buscar candidatos</h3>
+          <p>Refine sua busca com linguagem natural. A LIA analisa o texto e sugere melhorias.</p>
+          <div class="modal-ctx">
+            <span class="chip">📋 ${VAGA}</span>
+            <span class="chip">${ic.pin(11)} São Paulo, SP</span>
+            <span class="chip">${ic.brief(11)} Sênior</span>
+            <span class="chip">${ic.build(11)} Financeiro</span>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="mode-cards">
+            <button class="mode-card ${auto ? "" : "on"}" data-modo="manual">
+              <span class="ico">${ic.mouse(16)}</span>
+              <span><span class="t">Buscar e selecionar</span><span class="d">Você escolhe quais adicionar</span></span>
+            </button>
+            <button class="mode-card ${auto ? "on" : ""}" data-modo="auto">
+              <span class="ico">${ic.spark(16)}</span>
+              <span><span class="t">Adicionar automaticamente <span class="badge badge-cyan">Recomendado</span></span>
+              <span class="d">O sistema popula o funil por score</span></span>
+            </button>
+          </div>
+
+          ${opts.aviso ? `<p class="warn-line">${ic.alert(13)} <span>A vaga não tem <b>faixa salarial</b> e <b>idiomas</b>: a busca não vai filtrar por isso. Complete a vaga ou detalhe no texto antes de buscar, principalmente nas fontes que gastam crédito.</span></p>` : ""}
+
+          ${Busca.caixa({
+            modo: "natural",
+            modos: Busca.MODOS.filter((mo) => mo.k !== "jd" && mo.k !== "boolean"),
+            tags: "preenchido", fonte: opts.fonte || "global", altura: 92, semBotao: true, semNota: true,
+            texto: "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, CPA-20, Excel avançado e Power BI",
+          })}
+
+          ${auto ? `
+          <div class="mode-cards">
+            <div class="field"><label>👥 Quantidade máxima</label>
+              <input class="input" value="20"><span class="hint">Candidatos a adicionar (máx. 50)</span></div>
+            <div class="field"><label>🎯 Score mínimo</label>
+              <input class="input" value="75"><span class="hint">Apenas acima deste score</span></div>
+          </div>` : ""}
+        </div>
+        <div class="modal-foot">
+          <span class="credits-note paid">Busca global: consome créditos</span>
+          <span class="spacer"></span>
+          <button class="btn btn-ghost" data-fechar>Cancelar</button>
+          <button class="btn btn-primary" id="btn-confirmar">${auto ? "Buscar e adicionar" : "Buscar candidatos"}</button>
+        </div>
+      </div>`;
+    camadas().querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => camadas().innerHTML = ""));
+    camadas().querySelectorAll("[data-modo]").forEach((b) =>
+      b.addEventListener("click", () => Proto.apply(b.dataset.modo === "auto" ? "modal-auto" : "modal-manual")));
+    camadas().querySelectorAll("[data-fonte]").forEach((b) =>
+      b.addEventListener("click", () => {
+        camadas().querySelectorAll("[data-fonte]").forEach((x) => x.classList.toggle("on", x === b));
+        const nota = camadas().querySelector(".modal-foot .credits-note");
+        const f = b.dataset.fonte;
+        nota.className = "credits-note " + (f === "local" ? "free" : "paid");
+        nota.textContent = f === "local" ? "Busca local: sem custo"
+          : f === "hibrida" ? "Busca híbrida: consome créditos só na parcela global"
+          : "Busca global: consome créditos";
+      }));
+    const ok = document.getElementById("btn-confirmar");
+    if (ok) ok.addEventListener("click", () => Proto.apply("buscando"));
+  }
+
+  /* ---------- painel de tela cheia: resultados da busca da vaga ---------- */
+  const S = { linhas: [], sel: new Set(), salvos: new Set() };
+
+  function chipsTaxonomia() {
+    return Busca.CRITERIOS.slice(0, 4).map((c) =>
+      `<span class="chip-tax ${c.cls}">${ic[c.ico](12)} ${c.valor}</span>`).join("") +
+      `<span class="chip-tax chip-mais">+${Busca.CRITERIOS.length - 4} ${ic.chevD(11)}</span>`;
+  }
+
+  function painel(opts) {
+    opts = opts || {};
+    camadas().innerHTML = `
+      <div class="fs-panel">
+        <div class="fs-head">
+          <h3>${ic.search(16)} Busca de candidatos <span class="badge badge-gray">#1387</span></h3>
+          <span class="vaga-meta">para a vaga ${VAGA}</span>
+          <span class="spacer"></span>
+          <button class="icon-btn" data-fechar aria-label="Fechar">${ic.x(16)}</button>
+        </div>
+        ${opts.progresso ? `<div class="inline-progress">${ic.brain(13)} Analisando perfis… <b>4 de 10</b>
+           <span class="progress" style="width:120px"><i style="width:40%"></i></span>
+           <span style="color:var(--text-tertiary)">os primeiros resultados já aparecem abaixo</span></div>` : ""}
+        <div class="fs-body" style="position:relative">
+          ${opts.overlay ? `
+            <div class="fs-overlay">
+              <span class="ring"></span>
+              <h4>Procurando candidatos na base global…</h4>
+              <p>Buscas na base global podem levar até 1 minuto. Os resultados aparecem aqui assim que estiverem prontos.</p>
+              <span class="crit-hint">${ic.coin(12)} 10 créditos reservados para esta busca</span>
+            </div>` : `
+            <div class="query-bar">
+              <span class="qb-ico">${ic.search(16)}</span>
+              <span class="chip-tax chip-modo">${ic.brain(12)} Linguagem natural</span>
+              <span class="qb-sep"></span>
+              <div class="qb-chips">${chipsTaxonomia()}</div>
+              <span class="qb-sep"></span>
+              <button class="qb-link">${ic.doc(13)} Ver texto original</button>
+              <button class="btn btn-sm btn-secondary">${ic.sliders(13)} Editar busca</button>
+            </div>
+            <div class="table-wrap">
+              <table class="tbl">
+                <thead><tr><th class="c-check"></th><th class="c-match">Match</th><th class="c-fonte">Fonte</th>
+                  <th>Candidato</th><th>Cargo atual</th></tr></thead>
+                <tbody id="fs-tbody">${Busca.linhas(S.linhas, S.sel, S.salvos)}</tbody>
+              </table>
+              <div class="load-more">
+                <button class="btn btn-sm btn-secondary" id="fs-mais">${ic.plus(13)} Buscar mais candidatos</button>
+                <span class="meta">${S.linhas.length} de ~340 encontrados${S.salvos.size ? " · " + S.salvos.size + " já na vaga" : ""}</span>
+              </div>
+            </div>`}
+        </div>
+      </div>`;
+    camadas().querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => { camadas().innerHTML = ""; }));
+    camadas().querySelectorAll("[data-check]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const id = b.dataset.check;
+        S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id);
+        document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
+        painelReligar(); barraLote();
+      }));
+    const mais = document.getElementById("fs-mais");
+    if (mais) mais.addEventListener("click", () => {
+      S.linhas = S.linhas.concat(Busca.gerar(6, S.linhas.length + 50));
+      painel(opts); barraLote();
+      toast("6 novos perfis adicionados. Sua seleção foi mantida.");
+    });
+    barraLote();
+  }
+  function painelReligar() {
+    camadas().querySelectorAll("[data-check]").forEach((b) =>
+      b.addEventListener("click", () => {
+        const id = b.dataset.check;
+        S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id);
+        document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
+        painelReligar(); barraLote();
+      }));
+  }
+
+  function barraLote() {
+    const antiga = document.getElementById("bulk");
+    if (antiga) antiga.remove();
+    if (!S.sel.size) return;
+    const el = document.createElement("div");
+    el.className = "bulk-bar"; el.id = "bulk";
+    el.style.left = "24px";
+    el.innerHTML = `
+      <span class="bulk-count">${ic.check(15)} ${S.sel.size} selecionado${S.sel.size === 1 ? "" : "s"}</span>
+      <button class="bulk-btn bulk-ghost" id="b-limpar">Limpar</button>
+      <span class="bulk-ctx">Vaga <b>${VAGA}</b></span>
+      <span class="spacer"></span>
+      <button class="bulk-btn bulk-ghost">${ic.book(13)} Adicionar à lista</button>
+      <button class="bulk-btn bulk-sec" id="b-salvar">${ic.plus(13)} Salvar na vaga e continuar</button>
+      <button class="bulk-btn bulk-pri" id="b-voltar">Salvar e voltar para a vaga ${ic.arrow(13)}</button>`;
+    document.body.appendChild(el);
+    document.getElementById("b-limpar").addEventListener("click", () => {
+      S.sel.clear();
+      document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
+      painelReligar(); barraLote();
+    });
+    document.getElementById("b-salvar").addEventListener("click", () => {
+      const n = S.sel.size;
+      S.sel.forEach((id) => S.salvos.add(id));
+      S.sel.clear();
+      document.getElementById("fs-tbody").innerHTML = Busca.linhas(S.linhas, S.sel, S.salvos);
+      painelReligar(); barraLote();
+      toast(`<b>${n} candidatos salvos na vaga</b><br>${VAGA} · você continua na busca`);
+    });
+    document.getElementById("b-voltar").addEventListener("click", () => Proto.apply("salvando"));
+  }
+
+  document.getElementById("btn-abrir").addEventListener("click", () => Proto.apply("modal-manual"));
+
+  function baseLinhas(n) { S.linhas = Busca.gerar(n || 10, 0); S.sel = new Set(); S.salvos = new Set(); }
+
+  /* ---------- estados ---------- */
+  Proto.states([
+    { id: "modal-manual", label: "Modal: buscar e selecionar", render: () => { board(); modal({ modo: "manual" }); } },
+    { id: "modal-auto", label: "Modal: adicionar automático", render: () => { board(); modal({ modo: "auto" }); } },
+    { id: "modal-aviso", label: "Modal: vaga incompleta", render: () => { board(); modal({ modo: "manual", aviso: true }); } },
+    { id: "buscando", label: "Buscando (tela cheia)", render: () => {
+        board(); baseLinhas(10); painel({ overlay: true });
+        setTimeout(() => { if (Proto.active === "buscando") { painel({ progresso: true }); } }, 2600); } },
+    { id: "resultados", label: "Resultados na vaga", render: () => { board(); baseLinhas(10); painel({}); } },
+    { id: "resultados-sel", label: "Resultados: 5 marcados", render: () => {
+        board(); baseLinhas(10); S.linhas.slice(0, 5).forEach((c) => S.sel.add(c.id)); painel({}); } },
+    { id: "salvando", label: "Salvando na vaga", render: () => {
+        board(); baseLinhas(10); S.linhas.slice(0, 5).forEach((c) => S.salvos.add(c.id)); painel({});
+        camadas().insertAdjacentHTML("beforeend", `
+          <div class="modal-scrim"></div>
+          <div class="modal" style="width:440px">
+            <div class="conf-card">
+              <span class="circ">${ic.check(24)}</span>
+              <h3 style="font-size:15px;font-weight:700">5 candidatos enviados para a vaga</h3>
+              <p class="vaga-meta" style="margin-top:6px">Eles entram na etapa Triagem em segundo plano e aparecem destacados no funil.</p>
+              <div style="display:flex;gap:8px;justify-content:center;margin-top:var(--space-4)">
+                <button class="btn btn-secondary" id="c-continuar">Continuar buscando</button>
+                <button class="btn btn-primary" id="c-voltar">Ver a vaga agora</button>
+              </div>
+            </div>
+          </div>`);
+        document.getElementById("c-continuar").addEventListener("click", () => Proto.apply("resultados"));
+        document.getElementById("c-voltar").addEventListener("click", () => { location.href = "vaga-kanban.html?estado=importando"; }); } },
+    { id: "erro", label: "Erro na busca", render: () => {
+        board();
+        camadas().innerHTML = `
+          <div class="modal-scrim" data-fechar></div>
+          <div class="modal" style="width:520px">
+            <div class="modal-head"><h3>${ic.alert(15)} Não foi possível buscar</h3>
+              <p>A base global não respondeu. Nenhum crédito foi consumido.</p></div>
+            <div class="modal-foot"><span class="spacer"></span>
+              <button class="btn btn-ghost" data-fechar>Fechar</button>
+              <button class="btn btn-primary" onclick="Proto.apply('modal-manual')">Tentar de novo</button></div>
+          </div>`;
+        camadas().querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => camadas().innerHTML = "")); } },
+  ]);
+  </script>
+</body>
+</html>
