@@ -432,6 +432,7 @@ body.sb-collapsed .cv-panel { left: 64px; }
 .chip-tax .rm { display: flex; opacity: .5; }
 .chip-tax:hover .rm { opacity: 1; }
 .chip-modo { background: var(--text-primary); color: var(--text-inverse); }
+button.chip-modo:hover { background: var(--bg-inverse); }
 .chip-cargo { background: var(--bg-tertiary); color: var(--text-primary); }
 .chip-local { background: var(--wedo-purple-bg); color: var(--wedo-purple); }
 .chip-exp { background: var(--wedo-orange-bg); color: var(--wedo-orange); }

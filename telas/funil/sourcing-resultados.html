@@ -238,7 +238,7 @@ Requisitos:
       <div class="query-bar">
         <button class="icon-btn" id="btn-voltar" aria-label="Voltar para a busca">${ic.back(18)}</button>
         <span class="qb-ico">${ic.search(16)}</span>
-        <span class="chip-tax chip-modo">${ic.doc(12)} Descrição da vaga</span>
+        <button class="chip-tax chip-modo" id="btn-modo" title="Ver o texto usado nesta busca">${ic.doc(12)} Descrição da vaga</button>
         <span class="qb-sep"></span>
         <div class="qb-chips">${chips}</div>
         ${resto > 0 ? `<button class="chip-tax chip-mais" id="btn-mais-crit">+${resto} ${ic.chevD(11)}</button>` : ""}
@@ -293,6 +293,8 @@ Requisitos:
       </div>`;
     ligarControles();
     if (S.modo === "legacy") return;
+    const chipModo = document.getElementById("btn-modo");
+    if (chipModo) chipModo.addEventListener("click", abrirTexto);
     const voltarBusca = document.getElementById("btn-voltar");
     if (voltarBusca) voltarBusca.addEventListener("click", () => { location.href = "busca-nova.html"; });
     $("#btn-texto").addEventListener("click", abrirTexto);
@@ -431,13 +433,14 @@ Requisitos:
   }
 
   /* ---------- popover do texto original ---------- */
-  function abrirTexto() {
+  function abrirTexto(ev) {
     fecharCamadas();
-    const anchor = document.getElementById("btn-texto").getBoundingClientRect();
+    const alvo = (ev && ev.currentTarget) || document.getElementById("btn-texto");
+    const anchor = alvo.getBoundingClientRect();
     const el = document.createElement("div");
     el.className = "popover";
     el.style.top = (anchor.bottom + window.scrollY + 8) + "px";
-    el.style.left = Math.max(24, anchor.right - 620) + "px";
+    el.style.left = Math.min(Math.max(24, anchor.left + window.scrollX - 20), window.innerWidth - 640) + "px";
     el.style.position = "absolute";
     el.innerHTML = `
       <h4>Texto usado na busca</h4>
@@ -451,7 +454,7 @@ Requisitos:
     setTimeout(() => document.addEventListener("click", fecharAoClicarFora), 0);
   }
   function fecharAoClicarFora(ev) {
-    if (ev.target.closest(".popover") || ev.target.closest("#btn-texto")) return;
+    if (ev.target.closest(".popover") || ev.target.closest("#btn-texto") || ev.target.closest("#btn-modo")) return;
     fecharCamadas();
   }
 

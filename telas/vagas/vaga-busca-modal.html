@@ -210,11 +210,11 @@
             </div>` : `
             <div class="query-bar">
               <span class="qb-ico">${ic.search(16)}</span>
-              <span class="chip-tax chip-modo">${ic.brain(12)} Linguagem natural</span>
+              <button class="chip-tax chip-modo" id="fs-modo" title="Ver o texto usado nesta busca">${ic.brain(12)} Linguagem natural</button>
               <span class="qb-sep"></span>
               <div class="qb-chips">${chipsTaxonomia()}</div>
               <span class="qb-sep"></span>
-              <button class="qb-link">${ic.doc(13)} Ver texto original</button>
+              <button class="qb-link" id="fs-texto">${ic.doc(13)} Ver texto original</button>
               <button class="btn btn-sm btn-secondary" id="fs-editar">${ic.sliders(13)} Editar busca</button>
             </div>
             <div class="table-wrap">
@@ -233,6 +233,11 @@
     camadas().querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => { camadas().innerHTML = ""; }));
     const ed = document.getElementById("fs-editar");
     if (ed) ed.addEventListener("click", abrirEditarBusca);
+    const verTexto = () => toast("Abre o texto usado na busca, igual ao Funil de Talentos.");
+    ["fs-modo", "fs-texto"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("click", verTexto);
+    });
     camadas().querySelectorAll("[data-check]").forEach((b) =>
       b.addEventListener("click", () => {
         const id = b.dataset.check;
