@@ -215,7 +215,7 @@
               <div class="qb-chips">${chipsTaxonomia()}</div>
               <span class="qb-sep"></span>
               <button class="qb-link">${ic.doc(13)} Ver texto original</button>
-              <button class="btn btn-sm btn-secondary">${ic.sliders(13)} Editar busca</button>
+              <button class="btn btn-sm btn-secondary" id="fs-editar">${ic.sliders(13)} Editar busca</button>
             </div>
             <div class="table-wrap">
               <table class="tbl">
@@ -231,6 +231,8 @@
         </div>
       </div>`;
     camadas().querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => { camadas().innerHTML = ""; }));
+    const ed = document.getElementById("fs-editar");
+    if (ed) ed.addEventListener("click", abrirEditarBusca);
     camadas().querySelectorAll("[data-check]").forEach((b) =>
       b.addEventListener("click", () => {
         const id = b.dataset.check;
@@ -305,6 +307,35 @@
   document.getElementById("btn-abrir").addEventListener("click", () => Proto.apply("modal-manual"));
 
   function baseLinhas(n) { S.linhas = Busca.gerar(n || 10, 0); S.sel = new Set(); S.salvos = new Set(); }
+
+  /* ---------- modal "Editar sua busca" (mesmo do Funil) ---------- */
+  const QUALIDADE = {
+    score: 60,
+    proxima: "Adicione experiência para melhorar os resultados",
+    alertas: [
+      { tipo: "aviso", msg: "Sua busca pode ser muito ampla. Considere adicionar experiência e habilidades para refinar os resultados." },
+      { tipo: "info", msg: "Considere também: analista de FP&A, controller, business partner financeiro", acao: "Adicionar sinônimos de 'analista financeiro'" },
+    ],
+  };
+  function abrirEditarBusca() {
+    const eq = document.createElement("div");
+    eq.innerHTML = Busca.modalEditarHTML({
+      corpo: Busca.caixa({
+        modo: "natural", modos: Busca.MODOS.filter((mo) => mo.k !== "jd" && mo.k !== "boolean"),
+        tags: "preenchido", fonte: "global", sugestoes: false, qualidade: QUALIDADE,
+        texto: "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, CPA-20, Excel avançado e Power BI",
+      }),
+    });
+    camadas().appendChild(eq);
+    eq.querySelector("[data-eq-scrim]").addEventListener("click", (ev) => {
+      if (ev.target === ev.currentTarget) eq.remove();
+    });
+    eq.querySelector('[data-eq="cancelar"]').addEventListener("click", () => eq.remove());
+    eq.querySelector('[data-eq="salvar"]').addEventListener("click", () => {
+      eq.remove();
+      toast("Busca refeita com os critérios ajustados. Sua seleção foi mantida.");
+    });
+  }
 
   /* ---------- estados ---------- */
   Proto.states([

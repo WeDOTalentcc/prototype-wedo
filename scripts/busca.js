@@ -52,6 +52,9 @@
     nuvem: (s) => I('<path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.4 15.5A5 5 0 0 1 7 6a7 7 0 0 1 13.3 2.2A4.5 4.5 0 0 1 19.5 17"/>', s),
     mais: (s) => I('<circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/>', s),
     alerta: (s) => I('<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
+    varinha: (s) => I('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1Z"/><path d="M9 11 3 17l4 4 6-6"/><path d="m14 14 1 1"/>', s),
+    tendencia: (s) => I('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>', s),
+    info: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
     home: (s) => I('<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', s),
     zap: (s) => I('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>', s),
     filtro: (s) => I('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>', s),
@@ -202,6 +205,32 @@ Requisitos:
         ${CRITERIOS.map((c) => `<span class="chip-tax ${c.cls}">${ic[c.ico](11)} ${c.valor}</span>`).join("")}
       </div>` : "";
 
+    const liaSug = opts.sugestaoLia ? `
+      <div class="lia-sug">
+        ${ic.varinha(14)}
+        <span class="txt"><b>Sugestão: </b>${opts.sugestaoLia}</span>
+        <button class="aceitar" data-aceitar><kbd>Tab</kbd> Aceitar</button>
+        <button class="fechar" data-dispensar aria-label="Dispensar sugestão">${ic.x(12)}</button>
+      </div>` : "";
+
+    const q = opts.qualidade;
+    const cor = !q ? "" : q.score >= 60 ? "var(--status-success)" : q.score >= 40 ? "var(--status-warning)" : "var(--status-error)";
+    const qualidade = q ? `
+      <div class="qual">
+        <div class="qual-linha">
+          <div class="qual-barra">
+            <div class="top"><span class="lbl">Qualidade da busca</span><span class="val" style="color:${cor}">${q.score}%</span></div>
+            <div class="trilho"><i style="width:${q.score}%;background:${cor}"></i></div>
+          </div>
+          ${q.proxima ? `<span class="qual-proxima">${ic.tendencia(12)} ${q.proxima}</span>` : ""}
+        </div>
+        ${(q.alertas || []).map((a) => `
+          <div class="qual-alerta ${a.tipo}">
+            ${a.tipo === "aviso" ? ic.alerta(14) : ic.info(14)}
+            <span>${a.msg}${a.acao ? ` <button class="acao">${a.acao}</button>` : ""}</span>
+          </div>`).join("")}
+      </div>` : "";
+
     const sugestoes = opts.sugestoes === false || temTexto ? "" : `
       <div class="sc-sug">
         <span class="lbl">Sugestões:</span>
@@ -230,12 +259,15 @@ Requisitos:
             </div>
           </div>
 
+          ${liaSug}
+
           <div class="sc-tags">
             ${tags}
             <button class="assistente" data-assistente>${ic.brain(14)} Assistente de Busca</button>
           </div>
 
           ${sugestoes}
+          ${qualidade}
         </div>
         ${preview}
       </div>`;
@@ -313,6 +345,26 @@ Requisitos:
     document.removeEventListener("click", fecharAoClicarFora);
   }
 
+
+  /* ---------- modal "Editar sua busca" (EditQueryModal do produto) ---------- */
+  function modalEditarHTML(o) {
+    o = o || {};
+    return `
+      <div class="eq-scrim" data-eq-scrim>
+        <div class="eq-modal" role="dialog" aria-label="Editar sua busca">
+          <div class="eq-head">
+            <h2>${ic.search(16)} Editar sua busca</h2>
+            <p>Refine sua busca com linguagem natural. A LIA irá analisar e sugerir melhorias.</p>
+          </div>
+          <div class="eq-body" id="eq-body">${o.corpo || ""}</div>
+          <div class="eq-foot">
+            <button class="eq-btn" data-eq="cancelar">Cancelar</button>
+            <button class="eq-btn primario" data-eq="salvar">Salvar e Buscar</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
   window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, SUGESTOES, gerar, linhas, caixa,
-    selBarHTML, menuVariacoes, menuMais, abrirMenu, fecharMenus };
+    selBarHTML, menuVariacoes, menuMais, abrirMenu, fecharMenus, modalEditarHTML };
 })();

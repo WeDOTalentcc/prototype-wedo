@@ -135,7 +135,11 @@ a partir de **dentro da vaga** (modal + painel de tela cheia).
   esses chips são exatamente o que a LIA extraiu do texto.
 - `.search-card`: caixa de busca (réplica do SmartSearchInput), montada por
   `Busca.caixa()` em `scripts/busca.js`.
-- `.drawer`: painel lateral de edição da busca (critérios, texto original, filtros).
+- `.eq-modal` (via `Busca.modalEditarHTML()`): modal **Editar sua busca**, réplica do
+  `EditQueryModal` do produto (max-w 896, backdrop escuro com blur, cabeçalho com lupa,
+  o SmartSearchInput inteiro no corpo e o rodapé Cancelar / Salvar e Buscar). Dentro dele
+  cabem a sugestão da LIA (`.lia-sug`) e o painel de qualidade da busca (`.qual`).
+  A edição da busca acontece **sempre** nesse modal: nada de painel lateral.
 - `.sel-bar` (via `Busca.selBarHTML()`): barra de ações em lote, logo **abaixo da barra
   da busca**, como no `BulkActionsBar` do produto. Com dez ações possíveis ela satura,
   então o padrão é: uma ação principal com variação em **split button** (salvar na vaga

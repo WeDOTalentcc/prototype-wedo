@@ -220,7 +220,7 @@ Requisitos:
       renderBarra(); renderTabela(); renderBulk();
     });
     const f = document.getElementById("btn-filtros");
-    if (f) f.addEventListener("click", () => abrirDrawer("filtros"));
+    if (f) f.addEventListener("click", () => abrirEditar("filtros"));
     const cl = document.getElementById("btn-colunas");
     if (cl) cl.addEventListener("click", () => toast("Abre o painel de colunas (13 colunas disponíveis)."));
   }
@@ -296,11 +296,11 @@ Requisitos:
     const voltarBusca = document.getElementById("btn-voltar");
     if (voltarBusca) voltarBusca.addEventListener("click", () => { location.href = "busca-nova.html"; });
     $("#btn-texto").addEventListener("click", abrirTexto);
-    $("#btn-editar").addEventListener("click", () => abrirDrawer("criterios"));
+    $("#btn-editar").addEventListener("click", () => abrirEditar("natural"));
     const mais = $("#btn-mais-crit");
-    if (mais) mais.addEventListener("click", () => abrirDrawer("criterios"));
+    if (mais) mais.addEventListener("click", () => abrirEditar("natural"));
     document.querySelectorAll("[data-crit]").forEach((el) =>
-      el.addEventListener("click", () => abrirDrawer("criterios")));
+      el.addEventListener("click", () => abrirEditar("natural")));
     document.querySelectorAll("[data-rm]").forEach((el) =>
       el.addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -447,7 +447,7 @@ Requisitos:
         <button class="btn btn-sm btn-secondary" id="pv-editar">${ic.sliders(13)} Editar busca</button>
       </div>`;
     camadas().appendChild(el);
-    document.getElementById("pv-editar").addEventListener("click", () => abrirDrawer("texto"));
+    document.getElementById("pv-editar").addEventListener("click", () => abrirEditar("jd"));
     setTimeout(() => document.addEventListener("click", fecharAoClicarFora), 0);
   }
   function fecharAoClicarFora(ev) {
@@ -455,91 +455,101 @@ Requisitos:
     fecharCamadas();
   }
 
-  /* ---------- painel lateral: editar busca ---------- */
-  function abrirDrawer(aba) {
-    fecharCamadas();
-    const scrim = document.createElement("div");
-    scrim.className = "drawer-scrim";
-    scrim.addEventListener("click", fecharCamadas);
-    const el = document.createElement("aside");
-    el.className = "drawer";
-    el.setAttribute("role", "dialog");
-    el.setAttribute("aria-label", "Editar busca");
-    el.innerHTML = `
-      <div class="drawer-head">
-        <h3>Editar busca</h3>
-        <p>Busca #1387 · fonte Global (Pearch) + Banco de talentos</p>
-      </div>
-      <div class="drawer-tabs">
-        <button class="drawer-tab ${aba === "criterios" ? "active" : ""}" data-aba="criterios">Critérios</button>
-        <button class="drawer-tab ${aba === "texto" ? "active" : ""}" data-aba="texto">Texto original</button>
-        <button class="drawer-tab ${aba === "filtros" ? "active" : ""}" data-aba="filtros">Filtros avançados <span class="badge badge-gray">4</span></button>
-      </div>
-      <div class="drawer-body" id="drawer-body"></div>
-      <div class="drawer-foot">
-        <span class="res-count">${ic.coin(14)} Nova busca global: ~10 créditos</span>
-        <span style="display:flex;gap:8px">
-          <button class="btn btn-sm btn-ghost" id="dw-cancelar">Cancelar</button>
-          <button class="btn btn-sm btn-primary" id="dw-buscar">${ic.search(13)} Buscar novamente</button>
-        </span>
-      </div>`;
-    camadas().appendChild(scrim);
-    camadas().appendChild(el);
-    corpoDrawer(aba);
-    el.querySelectorAll("[data-aba]").forEach((b) =>
-      b.addEventListener("click", () => {
-        el.querySelectorAll("[data-aba]").forEach((x) => x.classList.toggle("active", x === b));
-        corpoDrawer(b.dataset.aba);
-      }));
-    document.getElementById("dw-cancelar").addEventListener("click", fecharCamadas);
-    document.getElementById("dw-buscar").addEventListener("click", () => {
-      fecharCamadas();
-      toast("Busca refeita com os critérios ajustados. Sua seleção foi mantida.");
+  /* ---------- modal "Editar sua busca" (EditQueryModal do produto) ----------
+     Proposta desta rodada: os Filtros avançados deixam de abrir um painel
+     separado e passam a ser uma seção deste mesmo modal, que já é a porta
+     única de edição da busca.                                              */
+  const QUALIDADE = {
+    score: 60,
+    proxima: "Adicione experiência para melhorar os resultados",
+    alertas: [
+      { tipo: "aviso", msg: "Sua busca pode ser muito ampla. Considere adicionar experiência e habilidades para refinar os resultados." },
+      { tipo: "info", msg: "Considere também: analista de FP&A, controller, business partner financeiro", acao: "Adicionar sinônimos de 'analista financeiro'" },
+    ],
+  };
+  const SUGESTAO_LIA = "Analista financeiro sênior em São Paulo com CPA-20 e experiência em FP&A no mercado financeiro";
+
+  function corpoEditar(modo) {
+    if (modo === "filtros") {
+      return Busca.caixa({
+        modo: "natural", modos: Busca.MODOS, tags: "preenchido", fonte: "hibrida",
+        texto: TEXTO_CURTO, semSubmit: true, sugestoes: false, filtrosAtivo: true,
+      }) + filtrosHTML();
+    }
+    return Busca.caixa({
+      modo: modo || "natural", modos: Busca.MODOS, tags: "preenchido", fonte: "hibrida",
+      texto: modo === "jd" ? Busca.TEXTO_JD : TEXTO_CURTO, altura: modo === "jd" ? 180 : 56,
+      sugestoes: false, sugestaoLia: modo === "natural" ? SUGESTAO_LIA : null, qualidade: QUALIDADE,
     });
   }
 
-  function corpoDrawer(aba) {
-    const body = document.getElementById("drawer-body");
-    if (aba === "texto") {
-      body.innerHTML = `
-        <div class="field">
-          <label>Texto da busca (descrição da vaga)</label>
-          <textarea class="input" style="min-height:320px;line-height:1.6">${TEXTO_BUSCA}</textarea>
-          <span class="hint">A LIA relê o texto e atualiza os critérios automaticamente ao salvar.</span>
-        </div>`;
-      return;
-    }
-    if (aba === "filtros") {
-      body.innerHTML = `
-        <div class="field"><label>Fonte da busca</label>
-          <div style="display:flex;gap:8px">
-            <button class="btn btn-sm btn-secondary">${ic.db(13)} Banco</button>
-            <button class="btn btn-sm btn-primary">${ic.globe(13)} Global</button>
-            <button class="btn btn-sm btn-secondary">Híbrida</button>
-          </div></div>
-        <div class="field"><label>Idiomas</label><div class="token-field"><span class="chip">Inglês avançado</span><button class="token-add">+ adicionar</button></div></div>
-        <div class="field"><label>Formação</label><div class="token-field"><span class="chip">Superior completo</span><button class="token-add">+ adicionar</button></div></div>
-        <div class="field"><label>Empresas excluídas</label><div class="token-field"><span class="chip">Concorrente A</span><span class="chip">Concorrente B</span><button class="token-add">+ adicionar</button></div></div>
-        <div class="field"><label>Contato obrigatório</label>
-          <div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary">E-mail</button><button class="btn btn-sm btn-secondary">Telefone</button></div>
-          <span class="hint">Exigir contato aumenta o custo por candidato na busca global.</span></div>`;
-      return;
-    }
-    const campos = [
-      { label: "Cargo", ico: "brief", vals: ["Analista Financeiro Sênior"] },
-      { label: "Localização", ico: "pin", vals: ["São Paulo"] },
-      { label: "Experiência", ico: "clock", vals: ["5+ anos"] },
-      { label: "Setor", ico: "build", vals: ["Mercado financeiro"] },
-      { label: "Habilidades", ico: "code", vals: ["Excel avançado", "Power BI", "SQL", "CPA-20", "Inglês avançado"] },
-    ];
-    body.innerHTML = campos.map((c) => `
-      <div class="field">
-        <label>${c.label}</label>
-        <div class="token-field">
-          ${c.vals.map((v) => `<span class="chip">${ic[c.ico](12)} ${v} ${ic.x(11)}</span>`).join("")}
-          <button class="token-add">+ adicionar</button>
-        </div>
-      </div>`).join("");
+  const TEXTO_CURTO = "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, CPA-20";
+
+  function filtrosHTML() {
+    return `
+      <div class="qual" style="border-top-style:dashed">
+        <p class="res-count" style="margin-bottom:4px">${ic.sliders(12)} Filtros avançados desta busca</p>
+        <div class="field"><label>Idiomas</label><div class="token-field"><span class="chip">Inglês avançado ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
+        <div class="field"><label>Formação</label><div class="token-field"><span class="chip">Superior completo ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
+        <div class="field"><label>Empresas excluídas</label><div class="token-field"><span class="chip">Concorrente A ${ic.x(11)}</span><span class="chip">Concorrente B ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
+      </div>`;
+  }
+
+  function abrirEditar(modo) {
+    fecharCamadas();
+    camadas().innerHTML = Busca.modalEditarHTML({ corpo: corpoEditar(modo || "natural") });
+    ligarEditar(modo || "natural");
+  }
+
+  function ligarEditar(modoAtual) {
+    const raiz = camadas();
+    raiz.querySelector("[data-eq-scrim]").addEventListener("click", (ev) => {
+      if (ev.target === ev.currentTarget) fecharCamadas();
+    });
+    raiz.querySelector('[data-eq="cancelar"]').addEventListener("click", fecharCamadas);
+    raiz.querySelector('[data-eq="salvar"]').addEventListener("click", () => {
+      fecharCamadas();
+      toast("Busca refeita com os critérios ajustados. Sua seleção foi mantida.");
+    });
+    raiz.querySelectorAll("[data-modo]").forEach((b) =>
+      b.addEventListener("click", () => {
+        raiz.querySelector("#eq-body").innerHTML = corpoEditar(b.dataset.modo);
+        ligarCorpo(b.dataset.modo);
+      }));
+    ligarCorpo(modoAtual);
+  }
+
+  function ligarCorpo(modo) {
+    const raiz = camadas();
+    raiz.querySelectorAll("[data-modo]").forEach((b) =>
+      b.addEventListener("click", () => {
+        raiz.querySelector("#eq-body").innerHTML = corpoEditar(b.dataset.modo);
+        ligarCorpo(b.dataset.modo);
+      }));
+    const filtros = raiz.querySelector("[data-filtros]");
+    if (filtros) filtros.addEventListener("click", () => {
+      raiz.querySelector("#eq-body").innerHTML = corpoEditar("filtros");
+      ligarCorpo("filtros");
+      raiz.querySelector("[data-filtros]").classList.add("on-filtros");
+    });
+    const aceitar = raiz.querySelector("[data-aceitar]");
+    if (aceitar) aceitar.addEventListener("click", () => {
+      const ta = raiz.querySelector(".sc-field textarea");
+      if (ta) ta.value = SUGESTAO_LIA;
+      raiz.querySelector(".lia-sug").remove();
+      toast("Sugestão da LIA aplicada ao texto da busca.");
+    });
+    const dispensar = raiz.querySelector("[data-dispensar]");
+    if (dispensar) dispensar.addEventListener("click", () => raiz.querySelector(".lia-sug").remove());
+    raiz.querySelectorAll("[data-fonte]").forEach((b) =>
+      b.addEventListener("click", () => {
+        raiz.querySelectorAll("[data-fonte]").forEach((x) => x.classList.remove("on-local", "on-hibrida", "on-global"));
+        b.classList.add("on-" + b.dataset.fonte);
+      }));
+    raiz.querySelectorAll("[data-contato]").forEach((b) =>
+      b.addEventListener("click", () => b.classList.toggle("on-contato")));
+    const assist = raiz.querySelector("[data-assistente]");
+    if (assist) assist.addEventListener("click", () => assist.classList.toggle("off"));
   }
 
   function fecharCamadas() {
