@@ -52,6 +52,12 @@
     nuvem: (s) => I('<path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.4 15.5A5 5 0 0 1 7 6a7 7 0 0 1 13.3 2.2A4.5 4.5 0 0 1 19.5 17"/>', s),
     mais: (s) => I('<circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="12" r="1.6"/>', s),
     alerta: (s) => I('<path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>', s),
+    engrenagem: (s) => I('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 8.9 19a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 5 8.9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9.4a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>', s),
+    userCheck: (s) => I('<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/>', s),
+    formatura: (s) => I('<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/>', s),
+    ciclo: (s) => I('<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>', s),
+    olho: (s) => I('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>', s),
+    reset: (s) => I('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>', s),
     varinha: (s) => I('<path d="m15 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1Z"/><path d="M9 11 3 17l4 4 6-6"/><path d="m14 14 1 1"/>', s),
     tendencia: (s) => I('<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>', s),
     info: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>', s),
@@ -365,6 +371,217 @@ Requisitos:
       </div>`;
   }
 
+
+  /* ---------- modal "Filtros Avançados" (advanced-filters-modal do produto) ---------- */
+  const AF_SECOES = [
+    { k: "origem", label: "Origem da Busca", ico: "search" },
+    { k: "opcoes", label: "Opções de Busca", ico: "engrenagem" },
+    { k: "geral", label: "Geral", ico: "engrenagem" },
+    { k: "perfil", label: "Perfil Profissional", ico: "userCheck" },
+    { k: "cargo", label: "Cargo", ico: "brief" },
+    { k: "empresa", label: "Empresa", ico: "build" },
+    { k: "habilidades", label: "Habilidades", ico: "code" },
+    { k: "formacao", label: "Formação", ico: "formatura" },
+    { k: "idiomas", label: "Idiomas", ico: "globe" },
+  ];
+
+  function afToggle(id, titulo, desc, ligado, icone) {
+    return `
+      <div class="af-linha">
+        <span class="info">${ic[icone || "mail"](16)}
+          <span><span class="t">${titulo}</span><span class="d">${desc}</span></span></span>
+        <button class="switch ${ligado ? "on" : ""}" data-switch="${id}" role="switch" aria-checked="${ligado}" aria-label="${titulo}"><i></i></button>
+      </div>`;
+  }
+
+  function afCampo(label, valores) {
+    return `<div class="field" style="margin-top:12px"><label>${label}</label>
+      <div class="token-field">${valores.map((v) => `<span class="chip">${v} ${ic.x(11)}</span>`).join("")}<button class="token-add">+ adicionar</button></div></div>`;
+  }
+
+  function modalFiltrosHTML(o) {
+    o = o || {};
+    const fonte = o.fonte || "hibrida";
+    return `
+      <div class="af-scrim">
+        <div class="fundo" data-af-fundo></div>
+        <div class="af-modal" role="dialog" aria-label="Filtros Avançados">
+          <div class="af-head">
+            <div>
+              <h2>Filtros Avançados</h2>
+              <p>Refine sua busca com filtros compatíveis com a Base Global</p>
+            </div>
+            <button class="icon-btn" data-af="fechar" aria-label="Fechar">${ic.x(18)}</button>
+          </div>
+
+          <div class="af-corpo">
+            <nav class="af-nav">
+              ${AF_SECOES.map((s, i) => `<button data-af-sec="${s.k}" class="${i === 0 ? "ativo" : ""}">${ic[s.ico](16)} ${s.label}</button>`).join("")}
+            </nav>
+
+            <div class="af-conteudo" id="af-conteudo">
+              <section class="af-sec" id="sec-origem">
+                <div class="af-sec-head">${ic.search(18)}
+                  <span><span class="t">Origem da Busca</span><span class="d">Selecione de onde buscar candidatos</span></span></div>
+                <div class="af-origens">
+                  <button class="af-origem ${fonte === "local" ? "on" : ""}" data-af-fonte="local">
+                    <span class="marca">${ic.check(12)}</span>
+                    <span class="cab">${ic.home(16)}<b>Base Local</b></span>
+                    <p>Candidatos já cadastrados na sua base</p>
+                  </button>
+                  <button class="af-origem ${fonte === "hibrida" ? "on" : ""}" data-af-fonte="hibrida">
+                    <span class="marca">${ic.check(12)}</span>
+                    <span class="cab">${ic.ciclo(16)}<b>Busca Híbrida</b></span>
+                    <p>Primeiro local, depois expande para global</p>
+                  </button>
+                  <button class="af-origem ${fonte === "global" ? "on" : ""}" data-af-fonte="global">
+                    <span class="marca">${ic.check(12)}</span>
+                    <span class="cab">${ic.globe(16)}<b>Busca Global</b></span>
+                    <p>Acesso a +800M de perfis profissionais</p>
+                  </button>
+                </div>
+                <div class="af-linha">
+                  <span class="info alerta">${ic.olho(16)}
+                    <span><span class="t">Incluir candidatos descobertos</span>
+                    <span class="d">Mostrar candidatos encontrados em buscas anteriores ainda não salvos na base</span></span></span>
+                  <button class="switch on" data-switch="descobertos" role="switch" aria-checked="true" aria-label="Incluir candidatos descobertos"><i></i></button>
+                </div>
+              </section>
+
+              <section class="af-sec" id="sec-opcoes">
+                <div class="af-sec-head">${ic.zap(18)}
+                  <span><span class="t">Opções de Busca</span><span class="d">Controle de qualidade e custo</span></span></div>
+                <p class="af-sub">Informações de Contato</p>
+                ${afToggle("email", "Apenas com Email", "Filtrar candidatos com email", true, "mail")}
+                ${afToggle("mostrar-email", "Mostrar Emails", "Exibir emails nos resultados", false, "mail")}
+                ${afToggle("telefone", "Apenas com Telefone", "Filtrar candidatos com telefone", false, "phone")}
+                ${afToggle("mostrar-telefone", "Mostrar Telefones", "Exibir telefones nos resultados", false, "phone")}
+              </section>
+
+              <section class="af-sec" id="sec-geral">
+                <div class="af-sec-head">${ic.engrenagem(18)}
+                  <span><span class="t">Geral</span><span class="d">Limite de resultados e ordenação</span></span></div>
+                ${afCampo("Quantidade de candidatos", ["20"])}
+                ${afCampo("Score mínimo", ["75"])}
+              </section>
+
+              <section class="af-sec" id="sec-perfil">
+                <div class="af-sec-head">${ic.userCheck(18)}
+                  <span><span class="t">Perfil Profissional</span><span class="d">Senioridade, tempo de experiência e localização</span></span></div>
+                ${afCampo("Senioridade", ["Sênior"])}
+                ${afCampo("Experiência mínima", ["5 anos"])}
+                ${afCampo("Localização", ["São Paulo"])}
+              </section>
+
+              <section class="af-sec" id="sec-cargo">
+                <div class="af-sec-head">${ic.brief(18)}
+                  <span><span class="t">Cargo</span><span class="d">Cargos atuais e anteriores</span></span></div>
+                ${afCampo("Cargo atual", ["Analista Financeiro Sênior"])}
+                ${afCampo("Cargos excluídos", ["Estagiário"])}
+              </section>
+
+              <section class="af-sec" id="sec-empresa">
+                <div class="af-sec-head">${ic.build(18)}
+                  <span><span class="t">Empresa</span><span class="d">Setor, porte e empresas de interesse</span></span></div>
+                ${afCampo("Setor", ["Mercado financeiro"])}
+                ${afCampo("Empresas excluídas", ["Concorrente A", "Concorrente B"])}
+              </section>
+
+              <section class="af-sec" id="sec-habilidades">
+                <div class="af-sec-head">${ic.code(18)}
+                  <span><span class="t">Habilidades</span><span class="d">Obrigatórias e desejáveis</span></span></div>
+                ${afCampo("Obrigatórias", ["Excel avançado", "Power BI"])}
+                ${afCampo("Desejáveis", ["SQL", "CPA-20"])}
+              </section>
+
+              <section class="af-sec" id="sec-formacao">
+                <div class="af-sec-head">${ic.formatura(18)}
+                  <span><span class="t">Formação</span><span class="d">Grau, área e instituições</span></span></div>
+                ${afCampo("Grau", ["Superior completo"])}
+                ${afCampo("Área", ["Administração", "Economia"])}
+              </section>
+
+              <section class="af-sec" id="sec-idiomas">
+                <div class="af-sec-head">${ic.globe(18)}
+                  <span><span class="t">Idiomas</span><span class="d">Idiomas exigidos e nível</span></span></div>
+                ${afCampo("Idiomas", ["Inglês avançado"])}
+              </section>
+            </div>
+          </div>
+
+          <div class="af-chips" id="af-chips">Filtros ativos:</div>
+
+          <div class="af-foot">
+            <button class="af-limpar" data-af="limpar">${ic.reset(12)} Limpar filtros</button>
+            <span class="dir">
+              <span class="res-count" id="af-contador">2 filtros ativos</span>
+              <button class="btn btn-sm btn-secondary" data-af="cancelar">Cancelar</button>
+              <button class="btn btn-sm btn-primary" data-af="aplicar">Aplicar Filtros</button>
+            </span>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  /* abre o modal de filtros e liga o comportamento; onAplicar recebe a contagem */
+  function abrirFiltros(hospedeiro, opts, onAplicar) {
+    opts = opts || {};
+    const host = hospedeiro || document.body;
+    const caixa = document.createElement("div");
+    caixa.innerHTML = modalFiltrosHTML(opts);
+    host.appendChild(caixa);
+    const fechar = () => caixa.remove();
+
+    caixa.querySelector("[data-af-fundo]").addEventListener("click", fechar);
+    caixa.querySelector('[data-af="fechar"]').addEventListener("click", fechar);
+    caixa.querySelector('[data-af="cancelar"]').addEventListener("click", fechar);
+
+    const conteudo = caixa.querySelector("#af-conteudo");
+    caixa.querySelectorAll("[data-af-sec]").forEach((b) =>
+      b.addEventListener("click", () => {
+        caixa.querySelectorAll("[data-af-sec]").forEach((x) => x.classList.toggle("ativo", x === b));
+        const alvo = caixa.querySelector("#sec-" + b.dataset.afSec);
+        if (alvo) conteudo.scrollTo({ top: alvo.offsetTop - conteudo.offsetTop - 8, behavior: "smooth" });
+      }));
+
+    caixa.querySelectorAll("[data-af-fonte]").forEach((b) =>
+      b.addEventListener("click", () => {
+        caixa.querySelectorAll("[data-af-fonte]").forEach((x) => x.classList.toggle("on", x === b));
+        atualizarContagem();
+      }));
+
+    caixa.querySelectorAll("[data-switch]").forEach((b) =>
+      b.addEventListener("click", () => {
+        b.classList.toggle("on");
+        b.setAttribute("aria-checked", b.classList.contains("on") ? "true" : "false");
+        atualizarContagem();
+      }));
+
+    function atualizarContagem() {
+      const ligados = caixa.querySelectorAll(".switch.on").length;
+      const fonteSel = caixa.querySelector(".af-origem.on");
+      const nome = fonteSel ? fonteSel.querySelector("b").textContent : "";
+      const n = ligados + (fonteSel ? 1 : 0);
+      caixa.querySelector("#af-contador").textContent = `${n} filtro${n === 1 ? "" : "s"} ativo${n === 1 ? "" : "s"}`;
+      const chips = [nome && `<span class="chip">${nome}</span>`]
+        .concat(Array.from(caixa.querySelectorAll(".switch.on")).map((sw) =>
+          `<span class="chip">${sw.getAttribute("aria-label")} ${ic.x(10)}</span>`))
+        .filter(Boolean).join("");
+      caixa.querySelector("#af-chips").innerHTML = "Filtros ativos: " + chips;
+    }
+    atualizarContagem();
+
+    caixa.querySelector('[data-af="limpar"]').addEventListener("click", () => {
+      caixa.querySelectorAll(".switch.on").forEach((sw) => { sw.classList.remove("on"); sw.setAttribute("aria-checked", "false"); });
+      atualizarContagem();
+    });
+    caixa.querySelector('[data-af="aplicar"]').addEventListener("click", () => {
+      const n = caixa.querySelectorAll(".switch.on").length + (caixa.querySelector(".af-origem.on") ? 1 : 0);
+      fechar();
+      if (onAplicar) onAplicar(n);
+    });
+  }
+
   window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, SUGESTOES, gerar, linhas, caixa,
-    selBarHTML, menuVariacoes, menuMais, abrirMenu, fecharMenus, modalEditarHTML };
+    selBarHTML, menuVariacoes, menuMais, abrirMenu, fecharMenus, modalEditarHTML, modalFiltrosHTML, abrirFiltros };
 })();

@@ -140,6 +140,12 @@ a partir de **dentro da vaga** (modal + painel de tela cheia).
   o SmartSearchInput inteiro no corpo e o rodapé Cancelar / Salvar e Buscar). Dentro dele
   cabem a sugestão da LIA (`.lia-sug`) e o painel de qualidade da busca (`.qual`).
   A edição da busca acontece **sempre** nesse modal: nada de painel lateral.
+- `.af-modal` (via `Busca.abrirFiltros()`): modal **Filtros Avançados**, réplica do
+  `advanced-filters-modal` (navegação lateral com as nove seções, cards de origem da
+  busca, chaves de opções, barra de filtros ativos e o rodapé com Limpar filtros,
+  contador, Cancelar e Aplicar Filtros). É ele que abre em todo lugar que diz
+  "Filtros": na linha de controles da tabela, na caixa de busca e dentro do modal de
+  edição.
 - `.sel-bar` (via `Busca.selBarHTML()`): barra de ações em lote, logo **abaixo da barra
   da busca**, como no `BulkActionsBar` do produto. Com dez ações possíveis ela satura,
   então o padrão é: uma ação principal com variação em **split button** (salvar na vaga

@@ -151,7 +151,12 @@
         document.querySelector(".sc-submit")?.classList.add("ativo");
       }));
     const filtros = document.querySelector("[data-filtros]");
-    if (filtros) filtros.addEventListener("click", () => toast("Abre o painel de filtros avançados da busca."));
+    if (filtros) filtros.addEventListener("click", () =>
+      Busca.abrirFiltros(document.body, { fonte: "hibrida" }, (n) => {
+        const b = document.querySelector("[data-filtros]");
+        if (b) b.classList.toggle("on-filtros", n > 0);
+        toast(`Filtros aplicados: ${n} ativo${n === 1 ? "" : "s"}.`);
+      }));
     // atalho do produto: volta para os resultados da busca em andamento
     const atalho = document.querySelector(".sc-gotoresults");
     if (atalho) {

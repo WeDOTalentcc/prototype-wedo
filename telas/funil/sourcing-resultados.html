@@ -220,7 +220,7 @@ Requisitos:
       renderBarra(); renderTabela(); renderBulk();
     });
     const f = document.getElementById("btn-filtros");
-    if (f) f.addEventListener("click", () => abrirEditar("filtros"));
+    if (f) f.addEventListener("click", () => abrirFiltrosAvancados());
     const cl = document.getElementById("btn-colunas");
     if (cl) cl.addEventListener("click", () => toast("Abre o painel de colunas (13 colunas disponíveis)."));
   }
@@ -473,12 +473,6 @@ Requisitos:
   const SUGESTAO_LIA = "Analista financeiro sênior em São Paulo com CPA-20 e experiência em FP&A no mercado financeiro";
 
   function corpoEditar(modo) {
-    if (modo === "filtros") {
-      return Busca.caixa({
-        modo: "natural", modos: Busca.MODOS, tags: "preenchido", fonte: "hibrida",
-        texto: TEXTO_CURTO, semSubmit: true, sugestoes: false, filtrosAtivo: true,
-      }) + filtrosHTML();
-    }
     return Busca.caixa({
       modo: modo || "natural", modos: Busca.MODOS, tags: "preenchido", fonte: "hibrida",
       texto: modo === "jd" ? Busca.TEXTO_JD : TEXTO_CURTO, altura: modo === "jd" ? 180 : 56,
@@ -488,14 +482,10 @@ Requisitos:
 
   const TEXTO_CURTO = "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, CPA-20";
 
-  function filtrosHTML() {
-    return `
-      <div class="qual" style="border-top-style:dashed">
-        <p class="res-count" style="margin-bottom:4px">${ic.sliders(12)} Filtros avançados desta busca</p>
-        <div class="field"><label>Idiomas</label><div class="token-field"><span class="chip">Inglês avançado ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
-        <div class="field"><label>Formação</label><div class="token-field"><span class="chip">Superior completo ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
-        <div class="field"><label>Empresas excluídas</label><div class="token-field"><span class="chip">Concorrente A ${ic.x(11)}</span><span class="chip">Concorrente B ${ic.x(11)}</span><button class="token-add">+ adicionar</button></div></div>
-      </div>`;
+  function abrirFiltrosAvancados() {
+    Busca.abrirFiltros(camadas(), { fonte: "hibrida" }, (n) => {
+      toast(`Filtros aplicados: ${n} ativo${n === 1 ? "" : "s"}. A busca será refeita com eles.`);
+    });
   }
 
   function abrirEditar(modo) {
@@ -530,11 +520,7 @@ Requisitos:
         ligarCorpo(b.dataset.modo);
       }));
     const filtros = raiz.querySelector("[data-filtros]");
-    if (filtros) filtros.addEventListener("click", () => {
-      raiz.querySelector("#eq-body").innerHTML = corpoEditar("filtros");
-      ligarCorpo("filtros");
-      raiz.querySelector("[data-filtros]").classList.add("on-filtros");
-    });
+    if (filtros) filtros.addEventListener("click", () => abrirFiltrosAvancados());
     const aceitar = raiz.querySelector("[data-aceitar]");
     if (aceitar) aceitar.addEventListener("click", () => {
       const ta = raiz.querySelector(".sc-field textarea");
