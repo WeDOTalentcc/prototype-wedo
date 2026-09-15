@@ -181,7 +181,6 @@ Requisitos:
 
   /* ---------- estado da tela ---------- */
   const S = {
-    modo: "proposta",      // "proposta" | "legacy"
     linhas: [],
     sel: new Set(),
     salvos: new Set(),
@@ -189,6 +188,7 @@ Requisitos:
     omitidos: 0,
     mostrarOmitidos: false,
     total: 340,
+    filtros: 4,
     daVaga: true,
     vaga: "Analista Financeiro Sênior",
   };
@@ -209,7 +209,7 @@ Requisitos:
   function controlesHTML() {
     return `
       <button class="btn btn-sm btn-secondary" id="btn-select-all">${ic.check(13)} Selecionar Todos</button>
-      <button class="btn btn-sm btn-secondary" id="btn-filtros">${ic.alvo(13)} Filtros</button>
+      <button class="btn btn-sm btn-secondary ${S.filtros ? "com-filtros" : ""}" id="btn-filtros">${ic.alvo(13)} Filtros${S.filtros ? ` <span class="badge badge-gray">${S.filtros}</span>` : ""}</button>
       <button class="btn btn-sm btn-secondary" id="btn-colunas">${ic.colunas(13)} Colunas <span class="badge badge-gray">13</span></button>`;
   }
   function ligarControles() {
@@ -243,61 +243,25 @@ Requisitos:
         <div class="qb-chips">${chips}</div>
         ${resto > 0 ? `<button class="chip-tax chip-mais" id="btn-mais-crit">+${resto} ${ic.chevD(11)}</button>` : ""}
         <span class="qb-sep"></span>
-        <button class="qb-link" id="btn-texto">${ic.doc(13)} Ver texto original</button>
-        <button class="btn btn-sm btn-secondary" id="btn-editar">${ic.sliders(13)} Editar busca <span class="badge badge-gray">4</span></button>
-      </div>`;
-  }
-
-  /* realce inline das entidades: é o que o produto faz hoje dentro do texto corrido */
-  function realcarEntidades(txt) {
-    const marcas = [
-      ["Analista Financeiro Sênior", "chip-cargo", "brief"],
-      ["São Paulo", "chip-local", "pin"],
-      ["5+ anos", "chip-exp", "clock"],
-      ["mercado financeiro", "chip-setor", "build"],
-      ["Excel avançado", "chip-skill", "code"],
-      ["Power BI", "chip-skill", "code"],
-      ["SQL", "chip-skill", "code"],
-      ["CPA-20", "chip-skill", "code"],
-    ];
-    return marcas.reduce((acc, [termo, cls, i]) =>
-      acc.replace(termo, `<span class="chip-tax ${cls}">${ic[i](11)}${termo}</span>`), txt);
-  }
-
-  function barraLegacy() {
-    return `
-      <div class="query-bar legacy">
-        <button class="icon-btn" aria-label="Voltar">${ic.back(18)}</button>
-        <span class="qb-ico" style="margin-top:4px">${ic.search(16)}</span>
-        <div class="qb-text">
-          ${realcarEntidades(TEXTO_BUSCA.replace(/\n+/g, " "))}
-          <button class="icon-btn" title="Editar query" style="vertical-align:middle">${ic.sliders(13)}</button>
-          <button class="qb-link" style="display:inline-flex">Editar Filtros ›</button>
-        </div>
-        ${S.sel.size ? `<span class="sel-chip" style="align-self:flex-start;margin-top:2px">${ic.alvo(11)} ${S.sel.size} de ${S.linhas.length} selecionados</span>` : ""}
-        <div class="qb-controles">${controlesHTML()}</div>
+        <button class="btn btn-sm btn-secondary" id="btn-editar">${ic.sliders(13)} Editar busca${S.filtros ? ` <span class="badge badge-gray">${S.filtros}</span>` : ""}</button>
       </div>`;
   }
 
   function renderBarra() {
-    document.getElementById("barra-busca").innerHTML =
-      S.modo === "legacy" ? barraLegacy() : barraProposta();
-    // no estado atual do produto os controles ficam na própria barra; na
-    // proposta eles ganham uma linha só deles, porque a barra passa a
-    // carregar a taxonomia.
-    document.getElementById("controles").innerHTML = S.modo === "legacy" ? "" : `
+    document.getElementById("barra-busca").innerHTML = barraProposta();
+    // os controles da tabela ganham uma linha só deles, porque a barra da
+    // busca passa a carregar a taxonomia.
+    document.getElementById("controles").innerHTML = `
       <div class="controls-row">
         <span class="res-count" id="res-count"></span>
         <div class="spacer"></div>
         ${controlesHTML()}
       </div>`;
     ligarControles();
-    if (S.modo === "legacy") return;
     const chipModo = document.getElementById("btn-modo");
     if (chipModo) chipModo.addEventListener("click", abrirTexto);
     const voltarBusca = document.getElementById("btn-voltar");
     if (voltarBusca) voltarBusca.addEventListener("click", () => { location.href = "busca-nova.html"; });
-    $("#btn-texto").addEventListener("click", abrirTexto);
     $("#btn-editar").addEventListener("click", () => abrirEditar("natural"));
     const mais = $("#btn-mais-crit");
     if (mais) mais.addEventListener("click", () => abrirEditar("natural"));
@@ -435,7 +399,7 @@ Requisitos:
   /* ---------- popover do texto original ---------- */
   function abrirTexto(ev) {
     fecharCamadas();
-    const alvo = (ev && ev.currentTarget) || document.getElementById("btn-texto");
+    const alvo = (ev && ev.currentTarget) || document.getElementById("btn-modo");
     const anchor = alvo.getBoundingClientRect();
     const el = document.createElement("div");
     el.className = "popover";
@@ -454,7 +418,7 @@ Requisitos:
     setTimeout(() => document.addEventListener("click", fecharAoClicarFora), 0);
   }
   function fecharAoClicarFora(ev) {
-    if (ev.target.closest(".popover") || ev.target.closest("#btn-texto") || ev.target.closest("#btn-modo")) return;
+    if (ev.target.closest(".popover") || ev.target.closest("#btn-modo")) return;
     fecharCamadas();
   }
 
@@ -484,6 +448,8 @@ Requisitos:
 
   function abrirFiltrosAvancados() {
     Busca.abrirFiltros(camadas(), { fonte: "hibrida" }, (n) => {
+      S.filtros = n;                 // o contador vive na tela: barra e controles
+      renderBarra();
       toast(`Filtros aplicados: ${n} ativo${n === 1 ? "" : "s"}. A busca será refeita com eles.`);
     });
   }
@@ -554,9 +520,9 @@ Requisitos:
 
   /* ---------- estados ---------- */
   function base(n) {
-    S.modo = "proposta"; S.criterios = CRITERIOS.slice();
+    S.criterios = CRITERIOS.slice();
     S.sel = new Set(); S.salvos = new Set();
-    S.omitidos = 0; S.mostrarOmitidos = false; S.daVaga = true;
+    S.omitidos = 0; S.mostrarOmitidos = false; S.daVaga = true; S.filtros = 4;
     S.linhas = gerar(n, 0);
     fecharCamadas();
   }
@@ -571,10 +537,6 @@ Requisitos:
         toast("<b>5 candidatos salvos na vaga</b><br>Analista Financeiro Sênior · você continua na busca"); } },
     { id: "ja-vistos", label: "Já vistos omitidos", render: () => {
         base(10); S.omitidos = 12; S.linhas.slice(0, 3).forEach((c) => S.salvos.add(c.id)); pintar(); } },
-    { id: "hoje", label: "Como está hoje", render: () => {
-        base(5); S.modo = "legacy"; pintar({ semRodape: true });
-        document.getElementById("tabela").insertAdjacentHTML("beforeend",
-          `<div class="foot-produto">Todos os ${S.linhas.length} candidatos carregados<br>${S.linhas.length} de ${S.linhas.length} candidatos</div>`); } },
     { id: "muitos", label: "Muitos + carregar mais", render: () => { base(40); pintar(); } },
     { id: "vazio", label: "0 registros", render: () => {
         base(0); renderBarra(); renderBulk();

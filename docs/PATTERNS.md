@@ -123,13 +123,14 @@ a partir de **dentro da vaga** (modal + painel de tela cheia).
 | `selecao` | Com candidatos marcados (barra de ações em lote visível) |
 | `salvos` | Depois de salvar na vaga: selo "Na vaga" e seleção zerada |
 | `ja-vistos` | Aviso de perfis omitidos por já terem sido vistos na vaga |
-| `hoje` | Como a tela está hoje (comparação para a proposta) |
 | `muitos`, `vazio`, `carregando`, `erro` | Como no padrão de tabela |
 
 ### Componentes (todos no `base.css`, nunca duplicar por tela)
 
 - `.pill-tabs` / `.pill-tab`: abas em pílula do Funil de Talentos.
-- `.query-bar` + `.chip-tax`: barra da busca ativa com a taxonomia. A cor do chip
+- `.query-bar` + `.chip-tax`: barra da busca ativa com a taxonomia. O chip preto de
+  origem (Descrição da vaga, Linguagem natural, Boolean...) abre o texto que gerou a
+  busca: não existe botão separado para isso, para a barra não repetir o mesmo caminho. A cor do chip
   identifica o critério: cargo neutro, localização roxo, experiência laranja,
   setor ciano, habilidades verde. É a única exceção à regra "ciano só para IA":
   esses chips são exatamente o que a LIA extraiu do texto.
