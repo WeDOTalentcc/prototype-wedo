@@ -56,10 +56,10 @@ window.SCREENS = [
     items: [
       {
         id: "busca-nova",
-        titulo: "Nova busca de candidatos",
+        titulo: "Busca do funil (estado inicial)",
         arquivo: "telas/funil/busca-nova.html",
         status: "rascunho",
-        descricao: "Caixa de busca do funil (SmartSearchInput): modos linguagem natural, similar, descrição da vaga, boolean e arquétipos, tags de critérios, fonte e aviso de crédito. Traz a prévia da taxonomia que a LIA extraiu antes de disparar a busca.",
+        descricao: "Réplica da tela de busca do Funil de Talentos: cabeçalho da LIA, modos de busca, campo com a barra de fontes (banco, híbrida, global, contato, voz), tags de critérios, Assistente de Busca e sugestões. Traz também a prévia da taxonomia que a LIA extraiu antes de disparar a busca.",
       },
       {
         id: "sourcing-resultados",

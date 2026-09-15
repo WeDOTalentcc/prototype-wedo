@@ -56,13 +56,7 @@
 
     <div id="barra-busca"></div>
 
-    <div class="controls-row">
-      <span class="res-count" id="res-count"></span>
-      <div class="spacer"></div>
-      <button class="btn btn-sm btn-secondary" id="btn-select-all">Selecionar Todos</button>
-      <button class="btn btn-sm btn-secondary" id="btn-filtros">Filtros</button>
-      <button class="btn btn-sm btn-secondary" id="btn-colunas">Colunas <span class="badge badge-gray">13</span></button>
-    </div>
+    <div id="controles"></div>
 
     <div class="table-wrap" id="tabela"></div>
   </div>
@@ -100,6 +94,9 @@
     coin: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M9.5 9.5h5"/><path d="M9.5 14.5h5"/>', s),
     eye: (s) => I('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>', s),
     alert: (s) => I('<circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/>', s),
+    alvo: (s) => I('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>', s),
+    colunas: (s) => I('<polyline points="8 7 3 12 8 17"/><polyline points="16 7 21 12 16 17"/>', s),
+    ordenar: (s) => I('<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>', s),
   };
 
   /* ---------- LIA contextual da tela ---------- */
@@ -197,6 +194,26 @@ Requisitos:
     setTimeout(() => t.remove(), 3600);
   }
 
+  /* ---------- controles da tabela (Selecionar Todos / Filtros / Colunas) ---------- */
+  function controlesHTML() {
+    return `
+      <button class="btn btn-sm btn-secondary" id="btn-select-all">${ic.check(13)} Selecionar Todos</button>
+      <button class="btn btn-sm btn-secondary" id="btn-filtros">${ic.alvo(13)} Filtros</button>
+      <button class="btn btn-sm btn-secondary" id="btn-colunas">${ic.colunas(13)} Colunas <span class="badge badge-gray">13</span></button>`;
+  }
+  function ligarControles() {
+    const sa = document.getElementById("btn-select-all");
+    if (sa) sa.addEventListener("click", () => {
+      if (S.sel.size === S.linhas.length) S.sel.clear();
+      else S.linhas.forEach((c) => S.sel.add(c.id));
+      renderTabela(); renderBulk();
+    });
+    const f = document.getElementById("btn-filtros");
+    if (f) f.addEventListener("click", () => abrirDrawer("filtros"));
+    const cl = document.getElementById("btn-colunas");
+    if (cl) cl.addEventListener("click", () => toast("Abre o painel de colunas (13 colunas disponíveis)."));
+  }
+
   /* ---------- barra da busca ---------- */
   function barraProposta() {
     const vis = S.criterios.slice(0, CHIPS_VISIVEIS);
@@ -246,12 +263,23 @@ Requisitos:
           <button class="icon-btn" title="Editar query" style="vertical-align:middle">${ic.sliders(13)}</button>
           <button class="qb-link" style="display:inline-flex">Editar Filtros ›</button>
         </div>
+        <div class="qb-controles">${controlesHTML()}</div>
       </div>`;
   }
 
   function renderBarra() {
     document.getElementById("barra-busca").innerHTML =
       S.modo === "legacy" ? barraLegacy() : barraProposta();
+    // no estado atual do produto os controles ficam na própria barra; na
+    // proposta eles ganham uma linha só deles, porque a barra passa a
+    // carregar a taxonomia.
+    document.getElementById("controles").innerHTML = S.modo === "legacy" ? "" : `
+      <div class="controls-row">
+        <span class="res-count" id="res-count"></span>
+        <div class="spacer"></div>
+        ${controlesHTML()}
+      </div>`;
+    ligarControles();
     if (S.modo === "legacy") return;
     const voltarBusca = document.getElementById("btn-voltar");
     if (voltarBusca) voltarBusca.addEventListener("click", () => { location.href = "busca-nova.html"; });
@@ -306,14 +334,17 @@ Requisitos:
       ${aviso}
       <table class="tbl">
         <thead><tr>
-          <th class="c-check"></th><th class="c-match">Match</th><th class="c-fonte">Fonte</th>
-          <th>Candidato</th><th>Cargo atual</th>
+          <th class="c-check"><button class="check" aria-label="Selecionar todos"></button></th>
+          <th class="c-match">Match ${ic.ordenar(12)}</th>
+          <th class="c-fonte">Fonte ${ic.ordenar(12)}</th>
+          <th>Candidato ${ic.ordenar(12)}</th>
+          <th>Cargo atual ${ic.ordenar(12)}</th>
         </tr></thead>
         <tbody>${S.linhas.map(linhaHTML).join("")}</tbody>
       </table>
       ${rodape}`;
-    document.getElementById("res-count").textContent =
-      `${S.linhas.length} candidato${S.linhas.length === 1 ? "" : "s"} nesta busca`;
+    const rc = document.getElementById("res-count");
+    if (rc) rc.textContent = `${S.linhas.length} candidato${S.linhas.length === 1 ? "" : "s"} nesta busca`;
 
     document.querySelectorAll("[data-check]").forEach((b) =>
       b.addEventListener("click", () => {
@@ -509,13 +540,6 @@ Requisitos:
   }
 
   /* ---------- ações do cabeçalho ---------- */
-  document.getElementById("btn-select-all").addEventListener("click", () => {
-    if (S.sel.size === S.linhas.length) S.sel.clear();
-    else S.linhas.forEach((c) => S.sel.add(c.id));
-    renderTabela(); renderBulk();
-  });
-  document.getElementById("btn-filtros").addEventListener("click", () => abrirDrawer("filtros"));
-  document.getElementById("btn-colunas").addEventListener("click", () => toast("Abre o painel de colunas (13 colunas disponíveis)."));
   document.getElementById("btn-nova-busca").addEventListener("click", () => { location.href = "busca-nova.html"; });
   document.getElementById("btn-salvar-busca").addEventListener("click", () => toast("Busca salva em <b>Buscas Salvas</b>."));
   document.getElementById("btn-novo").addEventListener("click", () => toast("Abre o cadastro manual de candidato."));
@@ -539,11 +563,14 @@ Requisitos:
         toast("<b>5 candidatos salvos na vaga</b><br>Analista Financeiro Sênior · você continua na busca"); } },
     { id: "ja-vistos", label: "Já vistos omitidos", render: () => {
         base(10); S.omitidos = 12; S.linhas.slice(0, 3).forEach((c) => S.salvos.add(c.id)); pintar(); } },
-    { id: "hoje", label: "Como está hoje", render: () => { base(5); S.modo = "legacy"; pintar({ semRodape: true }); } },
+    { id: "hoje", label: "Como está hoje", render: () => {
+        base(5); S.modo = "legacy"; pintar({ semRodape: true });
+        document.getElementById("tabela").insertAdjacentHTML("beforeend",
+          `<div class="foot-produto">Todos os ${S.linhas.length} candidatos carregados<br>${S.linhas.length} de ${S.linhas.length} candidatos</div>`); } },
     { id: "muitos", label: "Muitos + carregar mais", render: () => { base(40); pintar(); } },
     { id: "vazio", label: "0 registros", render: () => {
         base(0); renderBarra(); renderBulk();
-        document.getElementById("res-count").textContent = "Nenhum candidato";
+        const rc0 = document.getElementById("res-count"); if (rc0) rc0.textContent = "Nenhum candidato";
         document.getElementById("tabela").innerHTML = `
           <div class="empty-state">
             <div class="ico">⌕</div>
@@ -554,13 +581,13 @@ Requisitos:
           </div>`; } },
     { id: "carregando", label: "Carregando", render: () => {
         base(0); renderBarra(); renderBulk();
-        document.getElementById("res-count").textContent = "Buscando candidatos…";
+        const rc1 = document.getElementById("res-count"); if (rc1) rc1.textContent = "Buscando candidatos…";
         document.getElementById("tabela").innerHTML =
           `<div style="padding:var(--space-4);display:flex;flex-direction:column;gap:10px">` +
           Array(8).fill('<div class="skeleton skeleton-row"></div>').join("") + `</div>`; } },
     { id: "erro", label: "Erro", render: () => {
         base(0); renderBarra(); renderBulk();
-        document.getElementById("res-count").textContent = "";
+        const rc2 = document.getElementById("res-count"); if (rc2) rc2.textContent = "";
         document.getElementById("tabela").innerHTML = `
           <div style="padding:var(--space-5)">
             <div class="error-banner">⚠ Não foi possível concluir a busca global agora. Nenhum crédito foi consumido.

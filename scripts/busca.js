@@ -46,6 +46,10 @@
     mail: (s) => I('<rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-10 6L2 7"/>', s),
     phone: (s) => I('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/>', s),
     home: (s) => I('<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', s),
+    zap: (s) => I('<path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/>', s),
+    filtro: (s) => I('<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>', s),
+    tabela: (s) => I('<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/>', s),
+    mic: (s) => I('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>', s),
   };
 
   const TEXTO_JD = `Sobre a vaga: procuramos Analista Financeiro Sênior para atuar no time de planejamento financeiro em São Paulo, modelo híbrido, 3 dias no escritório.
@@ -145,56 +149,90 @@ Requisitos:
     }).join("");
   }
 
-  /* Caixa de busca (SmartSearchInput). opts:
-     { modo, texto, placeholder, tags: "vazio"|"preenchido", fonte, compacta,
-       preview: bool (prévia da taxonomia), botao: texto do primário }        */
+  /* Sugestões do estado vazio (mesmas do produto em homologação) */
+  const SUGESTOES = [
+    "Professora de matemática para ensino médio em Belo Horizonte",
+    "Enfermeiro com COREN ativo para hospital em São Paulo",
+    "Vendedor externo com experiência em bens de consumo",
+    "Analista financeiro com CPA-20 para mercado financeiro",
+    "Desenvolvedora backend sênior remota, Node.js e Python",
+  ];
+
+  /* ícone de cada critério dentro da tag */
+  const TAG_CLS = { local: "f-local", cargo: "f-cargo", exp: "f-exp", setor: "f-setor", skills: "f-skills" };
+
+  /* Caixa de busca (réplica do SmartSearchInput). opts:
+     { modo, modos, texto, placeholder, tags: "vazio"|"preenchido", fonte,
+       email, telefone, sugestoes, semSubmit, semFiltros, preview, altura }   */
   function caixa(opts) {
     opts = opts || {};
     const modo = opts.modo || "natural";
-    const modos = (opts.modos || MODOS).map((mo) => `
-      <button class="sc-mode ${mo.k === modo ? "active" : ""}" data-modo="${mo.k}">
-        <span class="${mo.k === "natural" ? "ai" : ""}">${ic[mo.ico](14)}</span>${mo.label}
-      </button>`).join("");
+    const fonte = opts.fonte || "hibrida";
     const preenchido = opts.tags === "preenchido";
-    const tags = TAGS.map((t) => preenchido
-      ? `<span class="chip-tax ${t.cls}">${ic[t.ico](12)} ${t.valor}</span>`
-      : `<span class="crit">${ic[t.ico](12)} ${t.label}</span>`).join("");
-    const fonte = opts.fonte || "global";
-    const nota = fonte === "local"
-      ? `<span class="credits-note free">Busca local: sem custo</span>`
-      : fonte === "hibrida"
-        ? `<span class="credits-note paid">Busca híbrida: consome créditos só na parcela global</span>`
-        : `<span class="credits-note paid">Busca global: consome créditos</span>`;
+    const temTexto = !!(opts.texto || "").trim();
+
+    const modos = (opts.modos || MODOS).map((mo) => `
+      <button class="sc-mode ${mo.k === modo ? "active" : ""}" data-modo="${mo.k}" aria-pressed="${mo.k === modo}">
+        ${ic[mo.ico](14)}${mo.label}
+      </button>`).join("");
+
+    const filtros = opts.semFiltros ? "" : `
+      <button class="sc-mode ${preenchido ? "on-filtros" : ""}" data-filtros>
+        ${ic.filtro(14)}Filtros${preenchido ? ' <span class="badge badge-gray" style="margin-left:2px">5</span>' : ""}
+      </button>
+      <button class="sc-gotoresults" aria-label="Ir para os resultados">${ic.tabela(16)}</button>`;
+
+    const tags = TAGS.map((t) => `
+      <span class="crit ${preenchido ? "filled " + TAG_CLS[t.k] : ""}" title="${preenchido ? t.valor : t.label}">
+        <span class="ico-box">${ic[t.ico](12)}</span>
+        <span class="lbl">${t.label}</span>
+        ${preenchido ? `<span class="sep">·</span><span class="val">${t.valor}</span>` : ""}
+      </span>`).join("");
+
     const preview = opts.preview ? `
       <div class="tax-preview">
         <span class="lbl">${ic.brain(13)} A LIA entendeu</span>
         ${CRITERIOS.map((c) => `<span class="chip-tax ${c.cls}">${ic[c.ico](11)} ${c.valor}</span>`).join("")}
       </div>` : "";
+
+    const sugestoes = opts.sugestoes === false || temTexto ? "" : `
+      <div class="sc-sug">
+        <span class="lbl">Sugestões:</span>
+        <div class="chips">${SUGESTOES.map((sg) => `<button class="sug-chip">${sg}</button>`).join("")}</div>
+      </div>`;
+
     return `
       <div class="search-card">
-        <div class="sc-modes">${modos}</div>
-        <div class="sc-input">
-          <textarea style="min-height:${opts.altura || 84}px" placeholder="${opts.placeholder || "Descreva quem você procura. Ex: Analista financeiro sênior em São Paulo, 5+ anos em mercado financeiro, CPA-20"}">${opts.texto || ""}</textarea>
-        </div>
-        <div class="sc-crit">
-          ${tags}
-          <span class="crit-hint">${ic.brain(12)} ${preenchido ? "5 de 5 critérios reconhecidos" : "0 de 5 critérios reconhecidos"}</span>
+        <div class="sc-modes">${modos}${filtros}</div>
+        <div class="sc-body">
+          <div class="sc-field">
+            <textarea rows="2" style="min-height:${opts.altura || 56}px"
+              placeholder="${opts.placeholder || "Ex: Desenvolvedores Python com 5+ anos em São Paulo..."}">${opts.texto || ""}</textarea>
+            <div class="sc-toolbar">
+              <div class="sc-sources">
+                <button class="src-btn ${fonte === "local" ? "on-local" : ""}" data-fonte="local" aria-label="Seu banco de talentos (gratuito)">${ic.home(14)}</button>
+                <button class="src-btn ${fonte === "hibrida" ? "on-hibrida" : ""}" data-fonte="hibrida" aria-label="Busca híbrida: local mais global">${ic.zap(14)}</button>
+                <button class="src-btn ${fonte === "global" ? "on-global" : ""}" data-fonte="global" aria-label="Busca global">${ic.globe(14)}</button>
+                <span class="src-sep"></span>
+                <button class="src-btn ${opts.email === false ? "" : "on-contato"}" data-contato="email" aria-label="Apenas com Email">${ic.mail(14)}</button>
+                <button class="src-btn ${opts.telefone ? "on-contato" : ""}" data-contato="telefone" aria-label="Apenas com Telefone">${ic.phone(14)}</button>
+                <span class="src-sep"></span>
+                <button class="src-btn" aria-label="Ditar a busca">${ic.mic(14)}</button>
+              </div>
+              ${opts.semSubmit ? "" : `<button class="sc-submit ${temTexto ? "ativo" : ""}" data-buscar aria-label="Buscar candidatos">${ic.search(16)}</button>`}
+            </div>
+          </div>
+
+          <div class="sc-tags">
+            ${tags}
+            <button class="assistente" data-assistente>${ic.brain(14)} Assistente de Busca</button>
+          </div>
+
+          ${sugestoes}
         </div>
         ${preview}
-        <div class="sc-foot">
-          <div class="seg" role="group" aria-label="Fonte da busca">
-            <button class="${fonte === "local" ? "on" : ""}" data-fonte="local">${ic.db(13)} Banco</button>
-            <button class="${fonte === "global" ? "on" : ""}" data-fonte="global">${ic.globe(13)} Global</button>
-            <button class="${fonte === "hibrida" ? "on" : ""}" data-fonte="hibrida">Híbrida</button>
-          </div>
-          <button class="toggle-pill" data-toggle="email">${ic.mail(12)} Apenas com Email</button>
-          <button class="toggle-pill" data-toggle="fone">${ic.phone(12)} Apenas com Telefone</button>
-          <span class="spacer"></span>
-          ${opts.semNota ? "" : nota}
-          ${opts.semBotao ? "" : `<button class="btn btn-primary" data-buscar>${ic.search(14)} ${opts.botao || "Buscar candidatos"}</button>`}
-        </div>
       </div>`;
   }
 
-  window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, gerar, linhas, caixa };
+  window.Busca = { ic, TEXTO_JD, CRITERIOS, TAGS, MODOS, CARGOS_LINHA, SUGESTOES, gerar, linhas, caixa };
 })();
