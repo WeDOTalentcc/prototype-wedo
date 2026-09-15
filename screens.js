@@ -59,7 +59,7 @@ window.SCREENS = [
         titulo: "Busca do funil (estado inicial)",
         arquivo: "telas/funil/busca-nova.html",
         status: "rascunho",
-        descricao: "Réplica da tela de busca do Funil de Talentos: cabeçalho da LIA, modos de busca, campo com a barra de fontes (banco, híbrida, global, contato, voz), tags de critérios, Assistente de Busca e sugestões. Traz também a prévia da taxonomia que a LIA extraiu antes de disparar a busca.",
+        descricao: "Porta de entrada do Funil de Talentos. Réplica da tela de busca: cabeçalho da LIA, modos de busca, campo com a barra de fontes (banco, híbrida, global, contato, voz), tags de critérios, Assistente de Busca e sugestões. A aba Histórico lista as buscas anteriores e é por ela (ou pelo atalho de resultados) que se chega à tela com os candidatos.",
       },
       {
         id: "sourcing-resultados",
@@ -110,5 +110,7 @@ window.SCREENS = [
 window.NAV_MAP = {
   "Conversar": "conversar",
   "Vagas": "vagas-lista",
-  "Funil de Talentos": "sourcing-resultados",
+  "Funil de Talentos": "busca-nova",
+  // itens de "Recentes" que são buscas abrem a última busca já carregada
+  "Buscar candidatos para QA": "sourcing-resultados",
 };

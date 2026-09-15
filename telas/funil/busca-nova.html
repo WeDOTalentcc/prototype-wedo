@@ -38,15 +38,15 @@
       <button class="btn btn-primary" id="btn-novo">+ Novo Candidato</button>
     </div>
 
-    <div class="pill-tabs" role="tablist">
-      <button class="pill-tab active" role="tab">Busca</button>
-      <button class="pill-tab" role="tab">Favoritos</button>
-      <button class="pill-tab" role="tab">Listas</button>
-      <button class="pill-tab" role="tab">Buscas Salvas</button>
-      <button class="pill-tab" role="tab">Histórico</button>
+    <div class="pill-tabs" role="tablist" id="abas">
+      <button class="pill-tab active" role="tab" data-aba="busca">Busca</button>
+      <a class="pill-tab" role="tab" href="../_em-construcao.html?titulo=Favoritos">Favoritos</a>
+      <a class="pill-tab" role="tab" href="../_em-construcao.html?titulo=Listas">Listas</a>
+      <a class="pill-tab" role="tab" href="../_em-construcao.html?titulo=Buscas Salvas">Buscas Salvas</a>
+      <button class="pill-tab" role="tab" data-aba="historico">Histórico</button>
     </div>
 
-    <div class="busca-centro">
+    <div class="busca-centro" id="area">
       <div class="interno" id="centro"></div>
     </div>
   </div>
@@ -77,14 +77,46 @@
     box.appendChild(t); setTimeout(() => t.remove(), 3600);
   }
 
+  /* Buscas anteriores: caminho navegável até a tela com candidatos, sem
+     transformar os resultados na porta de entrada do Funil de Talentos. */
+  const HISTORICO = [
+    { id: 1387, titulo: "Analista Financeiro Sênior · São Paulo · CPA-20", fonte: "Híbrida", qtd: 10, quando: "há 2 horas", chips: Busca.CRITERIOS.slice(0, 4) },
+    { id: 1381, titulo: "Professora de matemática para o ensino médio", fonte: "Banco", qtd: 24, quando: "ontem", chips: [] },
+    { id: 1374, titulo: "Desenvolvedora backend sênior remota, Node.js e Python", fonte: "Global", qtd: 18, quando: "3 dias atrás", chips: [] },
+  ];
+
   const TITULO_PADRAO = "Vamos buscar de forma inteligente?";
   function header(titulo) {
     return `<div class="lia-prompt">${ic.brain(28)} ${titulo || TITULO_PADRAO}</div>`;
   }
 
   function montar(html) {
+    marcarAba("busca");
+    document.getElementById("area").classList.remove("sem-recuo");
     document.getElementById("centro").innerHTML = html;
     ligar();
+  }
+
+  function marcarAba(id) {
+    document.querySelectorAll("#abas [data-aba]").forEach((b) =>
+      b.classList.toggle("active", b.dataset.aba === id));
+    document.querySelectorAll("#abas a").forEach((a) => a.classList.remove("active"));
+  }
+
+  function historicoHTML() {
+    return `
+      <div class="hist-lista">
+        ${HISTORICO.map((h) => `
+          <a class="hist-item" href="sourcing-resultados.html">
+            <span class="hist-ico">${ic.search(16)}</span>
+            <span class="hist-txt">
+              <span class="t">${h.titulo}</span>
+              <span class="m">Busca #${h.id} · ${h.fonte} · ${h.qtd} candidatos · ${h.quando}</span>
+              ${h.chips.length ? `<span class="c">${h.chips.map((c) => `<span class="chip-tax ${c.cls}">${ic[c.ico](11)} ${c.valor}</span>`).join("")}</span>` : ""}
+            </span>
+            <span class="hist-abrir">Abrir resultados ${ic.arrow(14)}</span>
+          </a>`).join("")}
+      </div>`;
   }
 
   function ligar() {
@@ -120,11 +152,30 @@
       }));
     const filtros = document.querySelector("[data-filtros]");
     if (filtros) filtros.addEventListener("click", () => toast("Abre o painel de filtros avançados da busca."));
+    // atalho do produto: volta para os resultados da busca em andamento
+    const atalho = document.querySelector(".sc-gotoresults");
+    if (atalho) {
+      atalho.setAttribute("title", "Ver os resultados da última busca");
+      atalho.addEventListener("click", () => { location.href = "sourcing-resultados.html"; });
+    }
   }
+
+  document.querySelectorAll("#abas [data-aba]").forEach((b) =>
+    b.addEventListener("click", () => Proto.apply(b.dataset.aba === "historico" ? "historico" : "natural")));
 
   Proto.states([
     { id: "natural", label: "Estado inicial", render: () =>
         montar(header() + Busca.caixa({ modo: "natural", tags: "vazio", fonte: "hibrida" })) },
+
+    { id: "historico", label: "Histórico de buscas", render: () => {
+        marcarAba("historico");
+        document.getElementById("area").classList.add("sem-recuo");
+        document.getElementById("centro").innerHTML = `
+          <div class="hist-cab">
+            <h2>Buscas anteriores</h2>
+            <p>Abra uma busca para ver os candidatos que ela trouxe, continuar de onde parou ou refazer com outros critérios.</p>
+          </div>` + historicoHTML();
+      } },
 
     { id: "digitado", label: "Com texto e critérios", render: () =>
         montar(header() + Busca.caixa({
@@ -172,11 +223,6 @@
             <div class="d">Arquétipo público da conta</div>
             <div class="tags"><span class="chip">Budget</span><span class="chip">SAP</span></div></div>
         </div>`) },
-
-    { id: "sem-criterio", label: "Texto sem critérios", render: () =>
-        montar(header() + Busca.caixa({
-          modo: "natural", tags: "vazio", fonte: "hibrida", texto: "preciso de gente boa",
-        }) + `<p class="sc-dica" style="margin-top:10px">Dica: Inclua cargo, localização e skills para melhores resultados</p>`) },
 
     { id: "buscando", label: "Buscando", render: () => {
         montar(header("LIA está buscando...") + Busca.caixa({

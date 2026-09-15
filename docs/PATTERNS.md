@@ -103,11 +103,17 @@ a partir de **dentro da vaga** (modal + painel de tela cheia).
 
 | id | label |
 |---|---|
-| `vazio` | Prompt em branco, tags de critério ainda não reconhecidas |
-| `natural` / `jd` / `similar` / `arquetipos` / `boolean` | Um por modo de busca do produto |
-| `sem-fonte` | Nenhuma fonte marcada: primário desabilitado + aviso |
+| `natural` | Estado inicial: prompt em branco, tags de critério ainda não reconhecidas |
+| `historico` | Aba Histórico: buscas anteriores, cada uma abrindo a tela de resultados |
+| `digitado` / `jd` / `similar` / `arquetipos` / `boolean` | Um por modo de busca do produto |
 | `buscando` | Progresso, com o aviso de créditos reservados |
 | `erro` | Falha da fonte global, deixando claro que não houve consumo |
+
+> **Navegação:** o item "Funil de Talentos" do menu abre a **busca**, nunca a lista de
+> candidatos, igual ao produto. Os caminhos até a tela com candidatos são o atalho de
+> resultados (ícone de tabela na linha dos modos), a aba Histórico e os itens de busca
+> em "Recentes" na sidebar. Abas ainda sem tela desenhada apontam para
+> `telas/_em-construcao.html`, para nenhum clique morrer.
 
 ### Estados dos resultados
 
