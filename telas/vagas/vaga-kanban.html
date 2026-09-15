@@ -60,6 +60,7 @@
   <script src="../../scripts/mock.js"></script>
   <script src="../../scripts/proto.js"></script>
   <script src="../../scripts/lia.js"></script>
+  <script src="../../scripts/busca.js"></script>
   <script>
   const I = (p, s) => `<svg width="${s || 16}" height="${s || 16}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
   const ic = {
@@ -80,9 +81,12 @@
   const COLUNAS = ["Triagem", "Entrevista LIA", "Entrevista Gestor", "Proposta", "Contratado"];
   const NOVOS_NOMES = ["Diego Santana", "Juliana Martins", "Vinícius Farias", "André Gonçalves", "Marcelo Freitas"];
 
+  let seqCargo = 0;
   function cand(novo) {
     const c = m.candidato();
-    return { nome: c.nome, iniciais: c.iniciais, cargo: c.cargo, score: 68 + (c.score % 30),
+    // cargos coerentes com a vaga financeira (mesma lista das telas de busca)
+    const cargo = Busca.CARGOS_LINHA[seqCargo++ % Busca.CARGOS_LINHA.length].split(" | ")[0];
+    return { nome: c.nome, iniciais: c.iniciais, cargo: cargo, score: 68 + (c.score % 30),
       fonte: c.score % 2 ? "global" : "local", novo: !!novo };
   }
   function iniciais(nome) { const p = nome.split(" "); return (p[0][0] + p[p.length - 1][0]).toUpperCase(); }
