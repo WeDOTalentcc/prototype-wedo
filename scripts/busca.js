@@ -374,7 +374,6 @@ Requisitos:
 
   /* ---------- modal "Filtros Avançados" (advanced-filters-modal do produto) ---------- */
   const AF_SECOES = [
-    { k: "origem", label: "Origem da Busca", ico: "search" },
     { k: "opcoes", label: "Opções de Busca", ico: "engrenagem" },
     { k: "geral", label: "Geral", ico: "engrenagem" },
     { k: "perfil", label: "Perfil Profissional", ico: "userCheck" },
@@ -401,17 +400,18 @@ Requisitos:
 
   function modalFiltrosHTML(o) {
     o = o || {};
-    const fonte = o.fonte || "hibrida";
+    const camada = Boolean(o.camada);
     return `
-      <div class="af-scrim">
+      <div class="af-scrim ${camada ? "em-camada" : ""}">
         <div class="fundo" data-af-fundo></div>
         <div class="af-modal" role="dialog" aria-label="Filtros Avançados">
           <div class="af-head">
+            ${camada ? `<button class="icon-btn" data-af="voltar" aria-label="Voltar para a edição da busca">${ic.back(18)}</button>` : ""}
             <div>
               <h2>Filtros Avançados</h2>
               <p>Refine sua busca com filtros compatíveis com a Base Global</p>
             </div>
-            <button class="icon-btn" data-af="fechar" aria-label="Fechar">${ic.x(18)}</button>
+            ${camada ? "" : `<button class="icon-btn" data-af="fechar" aria-label="Fechar">${ic.x(18)}</button>`}
           </div>
 
           <div class="af-corpo">
@@ -420,37 +420,15 @@ Requisitos:
             </nav>
 
             <div class="af-conteudo" id="af-conteudo">
-              <section class="af-sec" id="sec-origem">
-                <div class="af-sec-head">${ic.search(18)}
-                  <span><span class="t">Origem da Busca</span><span class="d">Selecione de onde buscar candidatos</span></span></div>
-                <div class="af-origens">
-                  <button class="af-origem ${fonte === "local" ? "on" : ""}" data-af-fonte="local">
-                    <span class="marca">${ic.check(12)}</span>
-                    <span class="cab">${ic.home(16)}<b>Base Local</b></span>
-                    <p>Candidatos já cadastrados na sua base</p>
-                  </button>
-                  <button class="af-origem ${fonte === "hibrida" ? "on" : ""}" data-af-fonte="hibrida">
-                    <span class="marca">${ic.check(12)}</span>
-                    <span class="cab">${ic.ciclo(16)}<b>Busca Híbrida</b></span>
-                    <p>Primeiro local, depois expande para global</p>
-                  </button>
-                  <button class="af-origem ${fonte === "global" ? "on" : ""}" data-af-fonte="global">
-                    <span class="marca">${ic.check(12)}</span>
-                    <span class="cab">${ic.globe(16)}<b>Busca Global</b></span>
-                    <p>Acesso a +800M de perfis profissionais</p>
-                  </button>
-                </div>
+              <section class="af-sec" id="sec-opcoes">
+                <div class="af-sec-head">${ic.zap(18)}
+                  <span><span class="t">Opções de Busca</span><span class="d">Controle de qualidade e custo</span></span></div>
                 <div class="af-linha">
                   <span class="info alerta">${ic.olho(16)}
                     <span><span class="t">Incluir candidatos descobertos</span>
                     <span class="d">Mostrar candidatos encontrados em buscas anteriores ainda não salvos na base</span></span></span>
                   <button class="switch on" data-switch="descobertos" role="switch" aria-checked="true" aria-label="Incluir candidatos descobertos"><i></i></button>
                 </div>
-              </section>
-
-              <section class="af-sec" id="sec-opcoes">
-                <div class="af-sec-head">${ic.zap(18)}
-                  <span><span class="t">Opções de Busca</span><span class="d">Controle de qualidade e custo</span></span></div>
                 <p class="af-sub">Informações de Contato</p>
                 ${afToggle("email", "Apenas com Email", "Filtrar candidatos com email", true, "mail")}
                 ${afToggle("mostrar-email", "Mostrar Emails", "Exibir emails nos resultados", false, "mail")}
@@ -516,7 +494,7 @@ Requisitos:
             <span class="dir">
               <span class="res-count" id="af-contador">2 filtros ativos</span>
               <button class="btn btn-sm btn-secondary" data-af="cancelar">Cancelar</button>
-              <button class="btn btn-sm btn-primary" data-af="aplicar">Aplicar Filtros</button>
+              <button class="btn btn-sm btn-primary" data-af="aplicar">${camada ? "Aplicar e voltar" : "Aplicar Filtros"}</button>
             </span>
           </div>
         </div>
@@ -530,11 +508,23 @@ Requisitos:
     const caixa = document.createElement("div");
     caixa.innerHTML = modalFiltrosHTML(opts);
     host.appendChild(caixa);
-    const fechar = () => caixa.remove();
+
+    // Como camada da edicao da busca, sair daqui e voltar para ela, nao fechar
+    // tudo: o recrutador nao perde o que ja tinha escrito.
+    const aoVoltar = typeof opts.aoVoltar === "function" ? opts.aoVoltar : null;
+    const fechar = () => { caixa.remove(); if (aoVoltar) aoVoltar(); };
 
     caixa.querySelector("[data-af-fundo]").addEventListener("click", fechar);
-    caixa.querySelector('[data-af="fechar"]').addEventListener("click", fechar);
+    const btFechar = caixa.querySelector('[data-af="fechar"]');
+    if (btFechar) btFechar.addEventListener("click", fechar);
+    const btVoltar = caixa.querySelector('[data-af="voltar"]');
+    if (btVoltar) btVoltar.addEventListener("click", fechar);
     caixa.querySelector('[data-af="cancelar"]').addEventListener("click", fechar);
+    document.addEventListener("keydown", function esc(ev) {
+      if (ev.key !== "Escape") return;
+      document.removeEventListener("keydown", esc);
+      fechar();
+    });
 
     const conteudo = caixa.querySelector("#af-conteudo");
     caixa.querySelectorAll("[data-af-sec]").forEach((b) =>
@@ -542,12 +532,6 @@ Requisitos:
         caixa.querySelectorAll("[data-af-sec]").forEach((x) => x.classList.toggle("ativo", x === b));
         const alvo = caixa.querySelector("#sec-" + b.dataset.afSec);
         if (alvo) conteudo.scrollTo({ top: alvo.offsetTop - conteudo.offsetTop - 8, behavior: "smooth" });
-      }));
-
-    caixa.querySelectorAll("[data-af-fonte]").forEach((b) =>
-      b.addEventListener("click", () => {
-        caixa.querySelectorAll("[data-af-fonte]").forEach((x) => x.classList.toggle("on", x === b));
-        atualizarContagem();
       }));
 
     caixa.querySelectorAll("[data-switch]").forEach((b) =>
@@ -558,25 +542,26 @@ Requisitos:
       }));
 
     function atualizarContagem() {
-      const ligados = caixa.querySelectorAll(".switch.on").length;
-      const fonteSel = caixa.querySelector(".af-origem.on");
-      const nome = fonteSel ? fonteSel.querySelector("b").textContent : "";
-      const n = ligados + (fonteSel ? 1 : 0);
+      const n = caixa.querySelectorAll(".switch.on").length;
       caixa.querySelector("#af-contador").textContent = `${n} filtro${n === 1 ? "" : "s"} ativo${n === 1 ? "" : "s"}`;
-      const chips = [nome && `<span class="chip">${nome}</span>`]
-        .concat(Array.from(caixa.querySelectorAll(".switch.on")).map((sw) =>
-          `<span class="chip">${sw.getAttribute("aria-label")} ${ic.x(10)}</span>`))
-        .filter(Boolean).join("");
+      const chips = Array.from(caixa.querySelectorAll(".switch.on"))
+        .map((sw) => `<span class="chip">${sw.getAttribute("aria-label")} ${ic.x(10)}</span>`)
+        .join("");
       caixa.querySelector("#af-chips").innerHTML = "Filtros ativos: " + chips;
     }
     atualizarContagem();
 
     caixa.querySelector('[data-af="limpar"]').addEventListener("click", () => {
-      caixa.querySelectorAll(".switch.on").forEach((sw) => { sw.classList.remove("on"); sw.setAttribute("aria-checked", "false"); });
+      caixa.querySelectorAll(".switch").forEach((sw) => {
+        // Candidatos descobertos e padrao de fabrica: limpar volta a ele, nao zera.
+        const fabrica = sw.dataset.switch === "descobertos";
+        sw.classList.toggle("on", fabrica);
+        sw.setAttribute("aria-checked", fabrica ? "true" : "false");
+      });
       atualizarContagem();
     });
     caixa.querySelector('[data-af="aplicar"]').addEventListener("click", () => {
-      const n = caixa.querySelectorAll(".switch.on").length + (caixa.querySelector(".af-origem.on") ? 1 : 0);
+      const n = caixa.querySelectorAll(".switch.on").length;
       fechar();
       if (onAplicar) onAplicar(n);
     });

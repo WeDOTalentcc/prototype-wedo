@@ -446,8 +446,8 @@ Requisitos:
 
   const TEXTO_CURTO = "Analista financeiro sênior em São Paulo, 5+ anos no mercado financeiro, CPA-20";
 
-  function abrirFiltrosAvancados() {
-    Busca.abrirFiltros(camadas(), { fonte: "hibrida" }, (n) => {
+  function abrirFiltrosAvancados(voltarPara) {
+    Busca.abrirFiltros(camadas(), { camada: Boolean(voltarPara), aoVoltar: voltarPara }, (n) => {
       S.filtros = n;                 // o contador vive na tela: barra e controles
       renderBarra();
       toast(`Filtros aplicados: ${n} ativo${n === 1 ? "" : "s"}. A busca será refeita com eles.`);
@@ -486,7 +486,7 @@ Requisitos:
         ligarCorpo(b.dataset.modo);
       }));
     const filtros = raiz.querySelector("[data-filtros]");
-    if (filtros) filtros.addEventListener("click", () => abrirFiltrosAvancados());
+    if (filtros) filtros.addEventListener("click", () => abrirFiltrosAvancados(() => abrirEditar(modo)));
     const aceitar = raiz.querySelector("[data-aceitar]");
     if (aceitar) aceitar.addEventListener("click", () => {
       const ta = raiz.querySelector(".sc-field textarea");
