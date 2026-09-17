@@ -85,6 +85,19 @@
     { id: 1374, titulo: "Desenvolvedora backend sênior remota, Node.js e Python", fonte: "Global", qtd: 18, quando: "3 dias atrás", chips: [] },
   ];
 
+  /* Atalho para retomar a ultima busca: fica logo abaixo do campo, no caminho
+     do olho de quem chega ao Funil, sem competir com a busca nova. Retomar abre
+     o sourcing ja executado, entao nao refaz busca nem cobra credito de novo. */
+  function faixaRetomarHTML(busca) {
+    if (!busca) return "";
+    return `
+      <button class="retomar" data-retomar="${busca.id}" type="button">
+        ${ic.ciclo(14)}
+        <span class="txt">Retomar: <b>${busca.titulo}</b></span>
+        <span class="meta">${busca.qtd} candidatos · ${busca.quando}</span>
+      </button>`;
+  }
+
   const TITULO_PADRAO = "Vamos buscar de forma inteligente?";
   function header(titulo) {
     return `<div class="lia-prompt">${ic.brain(28)} ${titulo || TITULO_PADRAO}</div>`;
@@ -144,6 +157,12 @@
         Proto.apply("buscando");
         setTimeout(() => { location.href = "sourcing-resultados.html"; }, 1400);
       }));
+    // Retomar abre o sourcing que ja rodou: nao passa pelo estado "buscando",
+    // porque nao ha busca nova nem credito a gastar.
+    const retomar = document.querySelector("[data-retomar]");
+    if (retomar) retomar.addEventListener("click", () => {
+      location.href = "sourcing-resultados.html";
+    });
     document.querySelectorAll(".sug-chip").forEach((b) =>
       b.addEventListener("click", () => {
         const ta = document.querySelector(".sc-field textarea");
@@ -170,7 +189,12 @@
 
   Proto.states([
     { id: "natural", label: "Estado inicial", render: () =>
-        montar(header() + Busca.caixa({ modo: "natural", tags: "vazio", fonte: "hibrida" })) },
+        montar(header() + Busca.caixa({ modo: "natural", tags: "vazio", fonte: "hibrida" })
+               + faixaRetomarHTML(HISTORICO[0])) },
+
+    { id: "sem-historico", label: "Primeira busca da conta", render: () =>
+        montar(header() + Busca.caixa({ modo: "natural", tags: "vazio", fonte: "hibrida" })
+               + faixaRetomarHTML(null)) },
 
     { id: "historico", label: "Histórico de buscas", render: () => {
         marcarAba("historico");

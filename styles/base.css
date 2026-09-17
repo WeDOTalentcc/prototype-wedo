@@ -927,3 +927,18 @@ a.pill-tab { text-decoration: none; display: inline-flex; align-items: center; }
   font-family: inherit; font-size: var(--text-xs); color: var(--text-secondary); cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
 .af-limpar:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .af-limpar svg { width: 12px; height: 12px; }
+
+/* ── atalho de retomar a ultima busca (abaixo da caixa de busca) ─────────── */
+.retomar { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 10px;
+  padding: 8px 12px; border: 1px solid var(--border-subtle); border-radius: 10px;
+  background: var(--bg-secondary); font-family: inherit; font-size: var(--text-xs);
+  color: var(--text-secondary); text-align: left; cursor: pointer; }
+.retomar:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.retomar svg { width: 14px; height: 14px; flex: none; color: var(--text-tertiary); }
+.retomar .txt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.retomar .txt b { font-weight: 500; color: var(--text-primary); }
+.retomar .meta { flex: none; color: var(--text-tertiary); }
+@media (max-width: 720px) {
+  .retomar { flex-wrap: wrap; }
+  .retomar .meta { width: 100%; padding-left: 22px; }
+}
