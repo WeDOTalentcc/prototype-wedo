@@ -7,31 +7,31 @@
   <link rel="stylesheet" href="../../styles/tokens.css">
   <link rel="stylesheet" href="../../styles/base.css">
   <style>
-    /* Layout exclusivo do launcher: ancorado acima do rodapé da sidebar,
-       como o botão que o abre. Componentes e cores vêm do base.css/tokens. */
+    /* Layout exclusivo do launcher. Componentes e cores vem do base.css/tokens. */
     .sup-launcher {
       position: fixed; left: calc(var(--sidebar-width) + var(--space-4)); bottom: 72px;
-      width: 376px; z-index: var(--z-modal);
+      width: 372px; z-index: var(--z-modal);
       background: var(--bg-primary); border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
       display: flex; flex-direction: column; overflow: hidden;
     }
-    .sup-head { display: flex; align-items: center; gap: var(--space-2);
-      padding: var(--space-4) var(--space-4) var(--space-3); }
-    .sup-head h2 { font-size: var(--text-lg); font-weight: 600; flex: 1; }
-    .sup-tabs-row { padding: 0 var(--space-4) var(--space-3); }
-    .sup-corpo { padding: 0 var(--space-4) var(--space-4); min-height: 236px;
+    .sup-fechar { align-self: flex-end; margin: var(--space-3) var(--space-3) 0; }
+    .sup-titulo { font-size: 21px; font-weight: 600; line-height: 1.25;
+      padding: 0 var(--space-5) var(--space-5); }
+    .sup-opcoes { padding: var(--space-4) var(--space-5);
+      border-top: 1px solid var(--border-subtle); }
+    .sup-corpo { padding: 0 var(--space-5) var(--space-5);
       display: flex; flex-direction: column; gap: var(--space-3); }
     .sup-fornecedor { border: 1px dashed var(--border-default); border-radius: var(--radius-md);
-      background: var(--bg-secondary); padding: var(--space-3); display: flex;
-      flex-direction: column; gap: var(--space-3); }
+      background: var(--bg-secondary); padding: var(--space-3);
+      display: flex; flex-direction: column; gap: var(--space-3); }
     .sup-fornecedor-tag { font-size: var(--text-xs); color: var(--text-tertiary);
       text-transform: uppercase; letter-spacing: .4px; }
     .sup-msg { display: flex; gap: var(--space-2); align-items: flex-end; }
     .sup-msg .avatar { flex: none; }
     .sup-balao { background: var(--bg-primary); border: 1px solid var(--border-subtle);
       border-radius: var(--radius-md); padding: 8px 10px; font-size: 13px;
-      line-height: 1.5; max-width: 240px; }
+      line-height: 1.5; max-width: 232px; }
     .sup-balao.meu { background: var(--bg-inverse); color: var(--text-inverse);
       border-color: var(--bg-inverse); margin-left: auto; }
     .sup-identificado { display: inline-flex; align-items: center; gap: 6px;
@@ -84,28 +84,28 @@
       enviar: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
       check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
       relogio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+      ticket: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>',
+      agenda: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
       alerta: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
     };
 
     const ABAS = [
-      { id: "chat", rotulo: "Chat" },
-      { id: "ticket", rotulo: "Ticket" },
-      { id: "agenda", rotulo: "Agenda" },
+      { id: "chat", rotulo: "Chat", ico: "chat" },
+      { id: "ticket", rotulo: "Ticket", ico: "ticket" },
+      { id: "agenda", rotulo: "Agenda", ico: "agenda" },
     ];
 
     function launcher(abaAtiva, corpoHtml) {
-      const abas = ABAS.map((a) =>
-        `<button class="pill-tab${a.id === abaAtiva ? " active" : ""}" data-aba="${a.id}">${a.rotulo}</button>`
+      const opcoes = ABAS.map((a) =>
+        `<button class="choice-tab${a.id === abaAtiva ? " active" : ""}" data-aba="${a.id}">${ico[a.ico]}${a.rotulo}</button>`
       ).join("");
       return `
         <aside class="sup-launcher" role="dialog" aria-label="Canal de suporte">
-          <div class="sup-head">
-            ${ico.boia}
-            <h2>Podemos ajudar?</h2>
-            <button class="icon-btn" aria-label="Fechar o suporte">${ico.x}</button>
-          </div>
-          <div class="sup-tabs-row"><div class="pill-tabs">${abas}</div></div>
-          <div class="sup-corpo">${corpoHtml}</div>
+          <button class="icon-btn sup-fechar" aria-label="Fechar o suporte">${ico.x}</button>
+          <h2 class="sup-titulo">Podemos ajudar?</h2>
+          <div class="sup-opcoes"><div class="choice-tabs">${opcoes}</div></div>
+          ${corpoHtml ? `<div class="sup-corpo">${corpoHtml}</div>` : ""}
         </aside>`;
     }
 
@@ -203,12 +203,13 @@
       if (antigo) antigo.remove();
       document.body.insertAdjacentHTML("beforeend", launcher(aba, corpo));
       document.querySelectorAll(".sup-launcher [data-aba]").forEach((b) => {
-        b.addEventListener("click", () => Proto.apply(b.dataset.aba === "chat" ? "padrao" : b.dataset.aba));
+        b.addEventListener("click", () => Proto.apply(b.dataset.aba));
       });
     }
 
     Proto.states([
-      { id: "padrao", label: "Chat", render: () => pinta("chat", corpoChat()) },
+      { id: "padrao", label: "Escolha", render: () => pinta("chat", "") },
+      { id: "chat", label: "Chat", render: () => pinta("chat", corpoChat()) },
       { id: "carregando", label: "Abrindo pela 1ª vez", render: () => pinta("chat", corpoCarregando()) },
       { id: "ticket", label: "Ticket", render: () => pinta("ticket", corpoTicket()) },
       { id: "agenda", label: "Agenda", render: () => pinta("agenda", corpoAgenda()) },
