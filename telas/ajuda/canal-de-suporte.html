@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Canal de Suporte — Protótipo WeDOTalent</title>
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <style>
+    /* Layout exclusivo do launcher: ancorado acima do rodapé da sidebar,
+       como o botão que o abre. Componentes e cores vêm do base.css/tokens. */
+    .sup-launcher {
+      position: fixed; left: calc(var(--sidebar-width) + var(--space-4)); bottom: 72px;
+      width: 376px; z-index: var(--z-modal);
+      background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg); box-shadow: var(--shadow-float);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .sup-head { display: flex; align-items: center; gap: var(--space-2);
+      padding: var(--space-4) var(--space-4) var(--space-3); }
+    .sup-head h2 { font-size: var(--text-lg); font-weight: 600; flex: 1; }
+    .sup-tabs-row { padding: 0 var(--space-4) var(--space-3); }
+    .sup-corpo { padding: 0 var(--space-4) var(--space-4); min-height: 236px;
+      display: flex; flex-direction: column; gap: var(--space-3); }
+    .sup-fornecedor { border: 1px dashed var(--border-default); border-radius: var(--radius-md);
+      background: var(--bg-secondary); padding: var(--space-3); display: flex;
+      flex-direction: column; gap: var(--space-3); }
+    .sup-fornecedor-tag { font-size: var(--text-xs); color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: .4px; }
+    .sup-msg { display: flex; gap: var(--space-2); align-items: flex-end; }
+    .sup-msg .avatar { flex: none; }
+    .sup-balao { background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 8px 10px; font-size: 13px;
+      line-height: 1.5; max-width: 240px; }
+    .sup-balao.meu { background: var(--bg-inverse); color: var(--text-inverse);
+      border-color: var(--bg-inverse); margin-left: auto; }
+    .sup-identificado { display: inline-flex; align-items: center; gap: 6px;
+      align-self: center; font-size: var(--text-xs); font-weight: 600;
+      color: var(--text-secondary); background: var(--bg-tertiary);
+      border-radius: var(--radius-full); padding: 4px 10px; }
+    .sup-campo-row { display: flex; gap: var(--space-2); align-items: center; }
+    .sup-campo-row .input { flex: 1; }
+    .sup-nota { font-size: var(--text-xs); color: var(--text-tertiary); line-height: 1.5; }
+    .sup-slot { border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      padding: 8px 10px; font-size: 13px; display: flex; align-items: center;
+      justify-content: space-between; gap: var(--space-2); }
+    .sup-skel { height: 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary); }
+  </style>
+</head>
+<body>
+  <div id="shell" data-nav="Ajuda"></div>
+
+  <div id="tela">
+    <div class="page-head">
+      <h1>Canal de Suporte</h1>
+      <div class="spacer"></div>
+    </div>
+    <div class="card card-pad">
+      <p style="font-size:13.5px;line-height:1.6;color:var(--text-secondary);max-width:640px">
+        O ponto de entrada fica na barra inferior do menu, no lugar do ícone de dicas.
+        Ao acionar, o atendimento abre sobre a tela atual, sem navegar e sem perder
+        trabalho em andamento. Use a barra de estados para percorrer as abas e os
+        casos de contorno.
+      </p>
+    </div>
+  </div>
+
+  <script src="../../screens.js"></script>
+  <script src="../../scripts/shell.js"></script>
+  <script src="../../scripts/conversas.js"></script>
+  <script src="../../scripts/mock.js"></script>
+  <script src="../../scripts/proto.js"></script>
+  <script src="../../scripts/lia.js"></script>
+  <script>
+    Lia.mount({ roteiro: [
+      { de: "user", texto: "A triagem da vaga de Analista de Dados não disparou as perguntas. É comigo ou é problema de vocês?" },
+      { de: "lia", texto: "Não encontrei erro na configuração da vaga, então não é com você. Isso é caso para o suporte: abri o canal aqui embaixo com o contexto desta vaga já preenchido.", digitando: 1500 },
+    ]});
+
+    const m = Mock.seed(41);
+    const ico = {
+      boia: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24"/><path d="m14.83 9.17 4.24-4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="m9.17 14.83-4.24 4.24"/><circle cx="12" cy="12" r="4"/></svg>',
+      x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+      enviar: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>',
+      check: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+      relogio: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+      alerta: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
+    };
+
+    const ABAS = [
+      { id: "chat", rotulo: "Chat" },
+      { id: "ticket", rotulo: "Ticket" },
+      { id: "agenda", rotulo: "Agenda" },
+    ];
+
+    function launcher(abaAtiva, corpoHtml) {
+      const abas = ABAS.map((a) =>
+        `<button class="pill-tab${a.id === abaAtiva ? " active" : ""}" data-aba="${a.id}">${a.rotulo}</button>`
+      ).join("");
+      return `
+        <aside class="sup-launcher" role="dialog" aria-label="Canal de suporte">
+          <div class="sup-head">
+            ${ico.boia}
+            <h2>Podemos ajudar?</h2>
+            <button class="icon-btn" aria-label="Fechar o suporte">${ico.x}</button>
+          </div>
+          <div class="sup-tabs-row"><div class="pill-tabs">${abas}</div></div>
+          <div class="sup-corpo">${corpoHtml}</div>
+        </aside>`;
+    }
+
+    const empresa = m.pick(Mock.EMPRESAS);
+    const primeiroNome = "Paulo";
+    const identificado = `<span class="sup-identificado">${ico.check} Identificado como Paulo Moraes · ${empresa}</span>`;
+
+    function corpoChat() {
+      return `
+        ${identificado}
+        <div class="sup-fornecedor">
+          <span class="sup-fornecedor-tag">Janela do HubSpot</span>
+          <div class="sup-msg">
+            <span class="avatar">W</span>
+            <div class="sup-balao">${'Oi, ' + primeiroNome + '! Já vejo que você está na conta da ' + empresa + '. Sobre o que precisa de ajuda?'}</div>
+          </div>
+          <div class="sup-msg"><div class="sup-balao meu">A triagem da vaga de Analista de Dados não está disparando as perguntas.</div></div>
+          <div class="sup-campo-row">
+            <input id="sup-msg" class="input" type="text" placeholder="Escreva sua mensagem" aria-label="Escreva sua mensagem">
+            <button class="btn btn-primary btn-sm" aria-label="Enviar mensagem">${ico.enviar}</button>
+          </div>
+        </div>
+        <p class="sup-nota">O miolo desta aba é a janela do HubSpot e vem com a aparência do fornecedor. Nós controlamos o cartão em volta, não o que está dentro dela.</p>`;
+    }
+
+    function corpoCarregando() {
+      return `
+        ${identificado}
+        <div class="sup-fornecedor" aria-busy="true">
+          <span class="sup-fornecedor-tag">Janela do HubSpot</span>
+          <div class="sup-skel" style="width:70%"></div>
+          <div class="sup-skel" style="width:90%"></div>
+          <div class="sup-skel" style="width:55%"></div>
+          <div class="sup-skel" style="width:80%"></div>
+        </div>
+        <p class="sup-nota">Primeira abertura: a janela do atendimento sobe sob demanda, e não junto com a plataforma.</p>`;
+    }
+
+    function corpoTicket() {
+      return `
+        ${identificado}
+        <div class="field">
+          <label for="sup-assunto">Assunto</label>
+          <select id="sup-assunto" class="input">
+            <option>Problema na plataforma</option>
+            <option>Dúvida de uso</option>
+            <option>Sugestão</option>
+            <option>Cobrança</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sup-desc">O que aconteceu</label>
+          <textarea id="sup-desc" class="input" rows="3" placeholder="Descreva o que você esperava e o que aconteceu"></textarea>
+        </div>
+        <button class="btn btn-primary">Abrir chamado</button>
+        <p class="sup-nota">O assunto define o tipo de problema e a prioridade, que é o que faz o prazo de resposta valer.</p>`;
+    }
+
+    function corpoAgenda() {
+      return `
+        ${identificado}
+        <div class="sup-fornecedor">
+          <span class="sup-fornecedor-tag">Agenda do HubSpot</span>
+          <div class="sup-slot"><span>Quarta, 1 de outubro · 14h00</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
+          <div class="sup-slot"><span>Quarta, 1 de outubro · 16h30</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
+          <div class="sup-slot"><span>Quinta, 2 de outubro · 09h00</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
+        </div>
+        <p class="sup-nota">Para quando o problema não cabe em texto. Os horários vêm da agenda de quem atende.</p>`;
+    }
+
+    function corpoForaDoHorario() {
+      return `
+        <div class="error-banner" style="align-items:flex-start">
+          ${ico.relogio}
+          <div>
+            <strong style="display:block;font-size:13px">Fora do horário de atendimento</strong>
+            <span style="font-size:12.5px">Atendemos de segunda a sexta, das 9h às 18h. Deixe sua mensagem que respondemos no próximo dia útil.</span>
+          </div>
+        </div>
+        ${corpoChat()}`;
+    }
+
+    function corpoIndisponivel() {
+      return `
+        <div class="empty-state" style="padding:var(--space-6) var(--space-2)">
+          <div style="color:var(--text-tertiary);margin-bottom:var(--space-2)">${ico.alerta}</div>
+          <h3 style="font-size:14px">Não conseguimos abrir o atendimento</h3>
+          <p style="font-size:12.5px;margin-bottom:var(--space-4)">Tente de novo em instantes. Se continuar, escreva para suporte@wedotalent.cc.</p>
+          <button class="btn btn-secondary btn-sm">Tentar de novo</button>
+        </div>`;
+    }
+
+    function pinta(aba, corpo) {
+      const antigo = document.querySelector(".sup-launcher");
+      if (antigo) antigo.remove();
+      document.body.insertAdjacentHTML("beforeend", launcher(aba, corpo));
+      document.querySelectorAll(".sup-launcher [data-aba]").forEach((b) => {
+        b.addEventListener("click", () => Proto.apply(b.dataset.aba === "chat" ? "padrao" : b.dataset.aba));
+      });
+    }
+
+    Proto.states([
+      { id: "padrao", label: "Chat", render: () => pinta("chat", corpoChat()) },
+      { id: "carregando", label: "Abrindo pela 1ª vez", render: () => pinta("chat", corpoCarregando()) },
+      { id: "ticket", label: "Ticket", render: () => pinta("ticket", corpoTicket()) },
+      { id: "agenda", label: "Agenda", render: () => pinta("agenda", corpoAgenda()) },
+      { id: "fora-do-horario", label: "Fora do horário", render: () => pinta("chat", corpoForaDoHorario()) },
+      { id: "indisponivel", label: "Atendimento fora do ar", render: () => pinta("chat", corpoIndisponivel()) },
+    ]);
+  </script>
+</body>
+</html>
