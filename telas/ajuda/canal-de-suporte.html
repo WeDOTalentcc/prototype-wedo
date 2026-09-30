@@ -44,6 +44,36 @@
     .sup-slot { border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
       padding: 8px 10px; font-size: 13px; display: flex; align-items: center;
       justify-content: space-between; gap: var(--space-2); }
+    /* Replica da janela real do HubSpot (portal 50630886), medida em navegador.
+       Preto do cabecalho e cor de marca de terceiro: excecao prevista no contrato. */
+    .hs-janela { border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+      overflow: hidden; background: var(--bg-primary); }
+    .hs-head { background: #000000; color: #FFFFFF; display: flex; align-items: center;
+      gap: 10px; padding: 12px var(--space-3); }
+    .hs-logo { width: 34px; height: 34px; flex: none; border-radius: 50%; background: #FFFFFF;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 800; color: #000000; letter-spacing: -.3px; }
+    .hs-head-txt strong { display: block; font-size: 14px; line-height: 1.2; }
+    .hs-head-txt span { font-size: 11.5px; opacity: .82; line-height: 1.3; display: block; }
+    .hs-corpo { padding: var(--space-3); display: flex; flex-direction: column;
+      gap: var(--space-2); background: var(--bg-secondary); }
+    .hs-privacidade { font-size: 10.5px; color: var(--text-tertiary); line-height: 1.45; }
+    .hs-saudacao { background: var(--bg-primary); border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md); padding: 9px 11px; font-size: 13px; line-height: 1.5; }
+    .hs-input { display: flex; align-items: center; gap: 8px; background: var(--bg-primary);
+      border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      padding: 8px 12px; }
+    .hs-input span { flex: 1; font-size: 13px; color: var(--text-tertiary); }
+    .hs-input svg { color: var(--text-tertiary); }
+    .sup-aviso { font-size: var(--text-xs); line-height: 1.5; color: var(--text-secondary);
+      background: var(--wedo-orange-bg); border-radius: var(--radius-sm); padding: 8px 10px; }
+    .hs-flutuante { position: fixed; left: var(--space-4); bottom: 72px; width: 300px;
+      z-index: var(--z-modal); box-shadow: var(--shadow-float); border-radius: var(--radius-md);
+      overflow: hidden; }
+    .hs-bolha { position: fixed; left: var(--space-4); bottom: var(--space-4);
+      width: 52px; height: 52px; border-radius: 50%; background: #000000; color: #FFFFFF;
+      display: flex; align-items: center; justify-content: center; z-index: var(--z-modal);
+      box-shadow: var(--shadow-float); border: none; }
     .sup-skel { height: 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary); }
   </style>
 </head>
@@ -87,6 +117,8 @@
       chat: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
       ticket: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>',
       agenda: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>',
+      camera: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
+      clipe: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
       alerta: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
     };
 
@@ -113,22 +145,26 @@
     const primeiroNome = "Paulo";
     const identificado = `<span class="sup-identificado">${ico.check} Identificado como Paulo Moraes · ${empresa}</span>`;
 
+    function janelaHubSpot() {
+      return `
+        <div class="hs-janela">
+          <div class="hs-head">
+            <span class="hs-logo">weDO</span>
+            <span class="hs-head-txt"><strong>WeDOTalent</strong><span>Normalmente respondemos em poucos minutos</span></span>
+          </div>
+          <div class="hs-corpo">
+            <p class="hs-privacidade">Ao conversar, você concorda com o processamento dos seus dados conforme a Política de Privacidade.</p>
+            <div class="hs-saudacao">Olá! Bem-vindo ao suporte WeDOTalent. Como podemos ajudar você hoje?</div>
+            <div class="hs-input"><span>Pergunte-me</span>${ico.camera}${ico.clipe}${ico.enviar}</div>
+          </div>
+        </div>`;
+    }
+
     function corpoChat() {
       return `
         ${identificado}
-        <div class="sup-fornecedor">
-          <span class="sup-fornecedor-tag">Janela do HubSpot</span>
-          <div class="sup-msg">
-            <span class="avatar">W</span>
-            <div class="sup-balao">${'Oi, ' + primeiroNome + '! Já vejo que você está na conta da ' + empresa + '. Sobre o que precisa de ajuda?'}</div>
-          </div>
-          <div class="sup-msg"><div class="sup-balao meu">A triagem da vaga de Analista de Dados não está disparando as perguntas.</div></div>
-          <div class="sup-campo-row">
-            <input id="sup-msg" class="input" type="text" placeholder="Escreva sua mensagem" aria-label="Escreva sua mensagem">
-            <button class="btn btn-primary btn-sm" aria-label="Enviar mensagem">${ico.enviar}</button>
-          </div>
-        </div>
-        <p class="sup-nota">O miolo desta aba é a janela do HubSpot e vem com a aparência do fornecedor. Nós controlamos o cartão em volta, não o que está dentro dela.</p>`;
+        ${janelaHubSpot()}
+        <p class="sup-aviso">O miolo é a janela do HubSpot. Ela se dimensiona sozinha e não aceita o nosso CSS, então a emenda com o cartão nunca fica perfeita. A configuração de cor, logo e saudação é feita no portal, não aqui.</p>`;
     }
 
     function corpoCarregando() {
@@ -198,9 +234,15 @@
         </div>`;
     }
 
+    function pintaFlutuante() {
+      document.querySelectorAll(".sup-launcher, .hs-flutuante, .hs-bolha").forEach((n) => n.remove());
+      document.body.insertAdjacentHTML("beforeend",
+        `<div class="hs-flutuante">${janelaHubSpot()}</div>
+         <button class="hs-bolha" aria-label="Abrir suporte">${ico.chat}</button>`);
+    }
+
     function pinta(aba, corpo) {
-      const antigo = document.querySelector(".sup-launcher");
-      if (antigo) antigo.remove();
+      document.querySelectorAll(".sup-launcher, .hs-flutuante, .hs-bolha").forEach((n) => n.remove());
       document.body.insertAdjacentHTML("beforeend", launcher(aba, corpo));
       document.querySelectorAll(".sup-launcher [data-aba]").forEach((b) => {
         b.addEventListener("click", () => Proto.apply(b.dataset.aba));
@@ -209,7 +251,8 @@
 
     Proto.states([
       { id: "padrao", label: "Escolha", render: () => pinta("chat", "") },
-      { id: "chat", label: "Chat", render: () => pinta("chat", corpoChat()) },
+      { id: "chat", label: "Chat embutido", render: () => pinta("chat", corpoChat()) },
+      { id: "chat-flutuante", label: "Chat flutuante (do HubSpot)", render: pintaFlutuante },
       { id: "carregando", label: "Abrindo pela 1ª vez", render: () => pinta("chat", corpoCarregando()) },
       { id: "ticket", label: "Ticket", render: () => pinta("ticket", corpoTicket()) },
       { id: "agenda", label: "Agenda", render: () => pinta("agenda", corpoAgenda()) },
