@@ -89,6 +89,18 @@ window.SCREENS = [
       },
     ],
   },
+  {
+    area: "Ajuda",
+    items: [
+      {
+        id: "canal-de-suporte",
+        titulo: "Canal de suporte (launcher)",
+        arquivo: "telas/ajuda/canal-de-suporte.html",
+        status: "rascunho",
+        descricao: "Launcher do canal de suporte ancorado na barra inferior do menu, com as três abas (Chat, Ticket, Agenda). A aba Chat mostra onde entra a janela do HubSpot, que vem com a aparência do fornecedor. Estados cobrem a primeira abertura, fora do horário de atendimento e o atendimento fora do ar.",
+      },
+    ],
+  },
   /* Adicione novas áreas/telas acima deste comentário, seguindo o shape:
   (e mapeie o label do menu em NAV_MAP abaixo para o link do menu apontar pra tela)
   {
@@ -109,6 +121,8 @@ window.SCREENS = [
    ============================================================= */
 window.NAV_MAP = {
   "Conversar": "conversar",
+  "Ajuda e dicas": "canal-de-suporte",
+  "Ajuda": "canal-de-suporte",
   "Vagas": "vagas-lista",
   "Funil de Talentos": "busca-nova",
   // itens de "Recentes" que são buscas abrem a última busca já carregada
