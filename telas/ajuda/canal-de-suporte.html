@@ -74,6 +74,36 @@
       width: 52px; height: 52px; border-radius: 50%; background: #000000; color: #FFFFFF;
       display: flex; align-items: center; justify-content: center; z-index: var(--z-modal);
       box-shadow: var(--shadow-float); border: none; }
+    .hs-agenda-head { display: flex; gap: 10px; align-items: center; padding: var(--space-3);
+      border-bottom: 1px solid var(--border-subtle); }
+    .hs-agenda-avatar { width: 40px; height: 40px; flex: none; border-radius: 50%;
+      background: var(--bg-inverse); color: var(--text-inverse); display: flex;
+      align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+    .hs-agenda-head strong { display: block; font-size: 13.5px; }
+    .hs-agenda-head span { font-size: 11.5px; color: var(--text-secondary); display: block; }
+    .hs-cal { padding: var(--space-3); }
+    .hs-cal-mes { display: flex; align-items: center; justify-content: space-between;
+      font-size: 12.5px; font-weight: 600; margin-bottom: var(--space-2); }
+    .hs-cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+    .hs-cal-grade span, .hs-cal-grade button { font-size: 11px; text-align: center;
+      padding: 5px 0; border: none; background: none; border-radius: var(--radius-sm);
+      color: var(--text-secondary); font-family: inherit; }
+    .hs-cal-grade span { color: var(--text-tertiary); font-weight: 600; }
+    .hs-cal-grade button.livre { color: var(--text-primary); font-weight: 600;
+      background: var(--bg-tertiary); cursor: pointer; }
+    .hs-cal-grade button.escolhido { background: var(--bg-inverse); color: var(--text-inverse); }
+    .hs-horas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px;
+      padding: 0 var(--space-3) var(--space-3); }
+    .hs-hora { border: 1px solid var(--border-default); border-radius: var(--radius-sm);
+      padding: 7px 0; font-size: 12.5px; font-weight: 600; text-align: center;
+      background: var(--bg-primary); font-family: inherit; cursor: pointer; }
+    .sup-anexo { display: flex; align-items: center; gap: var(--space-2);
+      border: 1px dashed var(--border-default); border-radius: var(--radius-md);
+      padding: 10px var(--space-3); font-size: 12.5px; color: var(--text-secondary);
+      background: var(--bg-secondary); cursor: pointer; width: 100%; font-family: inherit; }
+    .sup-anexo-nome { display: flex; align-items: center; justify-content: space-between;
+      gap: var(--space-2); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+      padding: 7px 10px; font-size: 12.5px; }
     .sup-skel { height: 12px; border-radius: var(--radius-sm); background: var(--bg-tertiary); }
   </style>
 </head>
@@ -160,6 +190,30 @@
         </div>`;
     }
 
+    function agendaHubSpot() {
+      const semana = ["D","S","T","Q","Q","S","S"];
+      const dias = Array.from({ length: 31 }, (_, i) => i + 1);
+      const livres = new Set([1, 2, 3, 6, 7, 8, 9, 10, 13, 14, 15]);
+      return `
+        <div class="hs-janela">
+          <div class="hs-agenda-head">
+            <span class="hs-agenda-avatar">JO</span>
+            <span><strong>Suporte WeDOTalent</strong><span>30 min · America/Sao_Paulo</span></span>
+          </div>
+          <div class="hs-cal">
+            <div class="hs-cal-mes"><span>Outubro de 2026</span><span>&lsaquo; &rsaquo;</span></div>
+            <div class="hs-cal-grade">
+              ${semana.map((d) => `<span>${d}</span>`).join("")}
+              ${dias.map((d) => `<button class="${d === 1 ? "livre escolhido" : livres.has(d) ? "livre" : ""}">${d}</button>`).join("")}
+            </div>
+          </div>
+          <div class="hs-horas">
+            <button class="hs-hora">09:00</button><button class="hs-hora">09:30</button>
+            <button class="hs-hora">14:00</button><button class="hs-hora">16:30</button>
+          </div>
+        </div>`;
+    }
+
     function corpoChat() {
       return `
         ${identificado}
@@ -196,20 +250,20 @@
           <label for="sup-desc">O que aconteceu</label>
           <textarea id="sup-desc" class="input" rows="3" placeholder="Descreva o que você esperava e o que aconteceu"></textarea>
         </div>
+        <button type="button" class="sup-anexo">${ico.clipe} Anexar print ou arquivo</button>
+        <div class="sup-anexo-nome">
+          <span>erro-triagem.png · 248 KB</span>
+          <button class="icon-btn" aria-label="Remover anexo">${ico.x}</button>
+        </div>
         <button class="btn btn-primary">Abrir chamado</button>
-        <p class="sup-nota">O assunto define o tipo de problema e a prioridade, que é o que faz o prazo de resposta valer.</p>`;
+        <p class="sup-aviso">Esta aba é inteiramente nossa: a submissão vai pela API de formulário, sem iframe. O anexo é em dois passos, porque a API v3 só aceita JSON: o arquivo sobe pela Files API e o formulário recebe a URL. Como isso exige credencial, quem sobe é o ats-api, nunca o navegador.</p>`;
     }
 
     function corpoAgenda() {
       return `
         ${identificado}
-        <div class="sup-fornecedor">
-          <span class="sup-fornecedor-tag">Agenda do HubSpot</span>
-          <div class="sup-slot"><span>Quarta, 1 de outubro · 14h00</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
-          <div class="sup-slot"><span>Quarta, 1 de outubro · 16h30</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
-          <div class="sup-slot"><span>Quinta, 2 de outubro · 09h00</span><button class="btn btn-secondary btn-sm">Marcar</button></div>
-        </div>
-        <p class="sup-nota">Para quando o problema não cabe em texto. Os horários vêm da agenda de quem atende.</p>`;
+        ${agendaHubSpot()}
+        <p class="sup-aviso">Também é janela do HubSpot, em iframe: o embed é um container com data-src apontando para meetings.hubspot.com. Nome e e-mail vão pré-preenchidos por parâmetro na URL. O layout dele é de duas colunas e aperta num cartão de 372 px.</p>`;
     }
 
     function corpoForaDoHorario() {

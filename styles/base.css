@@ -173,7 +173,7 @@ body.sb-collapsed .sb-foot { flex-direction: column; }
 .input, .select {
   width: 100%; padding: 7px 12px; border: 1px solid var(--border-default);
   border-radius: var(--radius-md); font-size: 13.5px; background: var(--bg-primary);
-  color: var(--text-primary);
+  color: var(--text-primary); font-family: inherit;
 }
 .input:focus, .select:focus { border-color: var(--wedo-cyan); box-shadow: 0 0 0 3px var(--focus-ring); outline: none; }
 .input.error { border-color: var(--status-error); }
