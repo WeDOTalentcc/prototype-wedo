@@ -92,6 +92,11 @@ Faltou componente? Adicionar no `base.css` com nome genérico e registrar aqui.
 
 ---
 
+- `.choice-tabs` / `.choice-tab` — escolha em blocos lado a lado, com ícone e rótulo,
+  a opção ativa preenchida em `--bg-inverse`. Use quando as opções levam a caminhos
+  diferentes (ex.: Chat / Ticket / Agenda no canal de suporte). Para filtrar uma
+  mesma lista, use `.pill-tabs`.
+
 ## 8. Busca de candidatos (sourcing)
 
 Padrão usado por `telas/funil/busca-nova.html`, `telas/funil/sourcing-resultados.html`
